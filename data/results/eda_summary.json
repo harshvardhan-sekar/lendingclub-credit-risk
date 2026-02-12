@@ -64,12 +64,12 @@
     },
     "term_values": {
       "expected": "{36, 60}",
-      "actual": "{np.int64(36), np.int64(60)}",
+      "actual": "{36, 60}",
       "status": "PASS"
     },
     "emp_length_range": {
       "expected": "{0..10}",
-      "actual": "[np.float64(0.0), np.float64(1.0), np.float64(2.0), np.float64(3.0), np.float64(4.0), np.float64(5.0), np.float64(6.0), np.float64(7.0), np.float64(8.0), np.float64(9.0), np.float64(10.0)]",
+      "actual": "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]",
       "status": "PASS"
     },
     "int_rate": {
