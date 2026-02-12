@@ -1,4 +1,4 @@
-# LendingClub Credit Risk Analytics Project — Roadmap V5
+# LendingClub Credit Risk Analytics Project — Roadmap V6
 
 ## Executive Summary
 
@@ -9,7 +9,7 @@
 **Key Shift from V1:** The project is no longer "build PD/EAD/LGD models." It's "build the kind of loss forecasting and portfolio management tool that LendingClub's risk team uses every day, powered by industry-standard models and enhanced with AI."
 
 **Two Deliverables:**
-1. **Modeling Notebooks** (Weeks 1-2): The analytical backbone — PD scorecard with macro covariates, ML models, EAD, LGD, ECL, vintage analysis, validation
+1. **Modeling Notebooks** (Weeks 1-2): The analytical backbone — PD behavioral scorecard with grade, ML models with macro, EAD, LGD, ECL, vintage analysis, validation
 2. **LendingClub Risk Analytics Platform** (Week 3): A Streamlit-based portfolio management and loss forecasting tool inspired by PyCraft, with dual-mode forecasting (Operational vs. CECL) and an embedded AI chatbot
 
 ---
@@ -19,7 +19,7 @@
 The following major enhancements have been added to V3:
 
 1. **FRED Macroeconomic Data Integration** — 6 key series (unemployment, HPI, GDP, CPI, Fed Funds, consumer sentiment) merged onto loans by origination month in Notebook 01
-2. **Macro Features as PD Model Covariates** — PD models now include unemployment, GDP, HPI to capture economic regime dependence; essential for time-based validation to work correctly
+2. **Macro Features as PD Model Covariates** — ML PD models now include unemployment, GDP, HPI to capture economic regime dependence; essential for time-based validation to work correctly
 3. **Competing Risks & Prepayment Model** — New section added to Week 2; prepayment rates computed from LendingClub data and fed into DCF-ECL calculation
 4. **LGD Model Terminology Fix** — "Stage 1/Stage 2" renamed to "Step 1 (Classification Phase)/Step 2 (Regression Phase)" to avoid IFRS-9 confusion
 5. **ECLProjector Class Redesign** — Flow rates now computed FROM receivables tracker data, not a constructor parameter; new `compute_forecast_flow_rates()` method
@@ -51,6 +51,28 @@ The following data-driven corrections and enhancements have been added to V4:
 
 ---
 
+## Changes from V5 (V5.1 + Data Gap Assessment Updates)
+
+### V5.1 PD Scorecard Amendments:
+1. **Grade included in WOE binning** — It's assigned at origination and legitimate for behavioral portfolio monitoring
+2. **int_rate and sub_grade excluded** — Redundant with grade, cause collinearity
+3. **Macro features excluded from logistic regression** — Confound with LC's growth trajectory (UNRATE sign inverts); reserved for ML models
+4. **Disciplined feature selection** — IV ≥ 0.05, pairwise |corr| < 0.70, target 10-15 features
+5. **All-negative WOE coefficients enforced** — Remove and refit if any positive coefficient appears
+6. **Updated targets** — AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
+7. **Updated RAG thresholds** — Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
+
+### Data Gap Assessment Fixes:
+1. **Session 5.5:** Replaced month-level logistic regression with survival/CPR lookup approach
+2. **Sessions 6-7:** Added synthetic monthly panel construction for flow rate computation
+3. **Sessions 6-7:** Renamed flow rate analysis to "Forward Default Flow Rate Analysis"
+4. **Sessions 6-7:** Added explicit data limitation documentation
+5. **Sessions 8-9:** Added notes about synthetic flow rate base
+6. **Sessions 10-11:** Added Streamlit data limitation disclaimers
+7. **Session 12:** Added Data Limitations section to README
+
+---
+
 ## Why This Approach Wins
 
 ### What LendingClub Actually Hires For
@@ -59,7 +81,7 @@ From live job postings (Sr Credit Strategy Analyst, Director of Data Science & M
 
 | What They Want | How This Project Demonstrates It |
 |----------------|----------------------------------|
-| "Develop, implement and handle credit risk strategies involving credit underwriting, pricing, and loan amount assignment" | Scorecard with credit policy cutoff analysis; pricing optimization by grade |
+| "Develop, implement and handle credit risk strategies involving credit underwriting, pricing, and loan amount assignment" | Behavioral scorecard with credit policy cutoff analysis; pricing optimization by grade |
 | "Design A/B tests to understand risk-return tradeoffs" | Strategy analysis: approval rate vs. expected loss tradeoffs |
 | "Craft automated dashboards to track KPIs around portfolio performance" | Streamlit dashboard with real-time portfolio metrics |
 | "Mine loan performance data and identify pockets of underperformance" | Vintage analysis, roll-rate monitoring, root cause analysis |
@@ -78,6 +100,7 @@ Most candidates build a PD model on LendingClub data with an ROC curve and call 
 - Add an AI layer that no other candidate will have
 - Include competing risks (prepayment) which most candidates overlook
 - Demonstrate data profiling diligence and handling of real-world data quirks
+- Be transparent about data limitations and demonstrate how to work around them analytically
 
 ---
 
@@ -120,6 +143,7 @@ Most candidates build a PD model on LendingClub data with an ROC curve and call 
 - Source: wordsforthewise/lending-club from Kaggle (https://www.kaggle.com/datasets/wordsforthewise/lending-club)
 - Covers Great Recession, recovery, and growth — multiple economic cycles
 - Rich feature set including bureau data, payment history, geographic data
+- **IMPORTANT DATA LIMITATION:** Loan-level terminal outcomes only. No monthly payment history (PMTHIST file no longer publicly available). This requires synthetic monthly panel reconstruction for flow rate computation.
 
 ### Loan Status Distribution (Full Dataset)
 
@@ -242,9 +266,14 @@ role at LendingClub (Model Development / Loss Forecasting / Strategy teams).
   - DFF (Federal Funds Rate)
   - UMCSENT (University of Michigan Consumer Sentiment)
   Merge onto loan data by origination month. Start with origination-time macro merge (mandatory);
-  performance-period merge as optional enhancement. CRITICAL for time-based split to work correctly —
-  without macro covariates, the model would overpredict defaults on 2016-2018 test data because it
-  learned recession-era rates as structural truths.
+  performance-period merge as optional enhancement. Macro features are used in:
+  - ML PD models (Notebook 04) — as raw covariates alongside borrower features
+  - Stress testing and scenario analysis (Notebooks 08, 09) — macro overlay on flow rates
+  - ECL computation (Notebook 07) — conditional PD adjustment
+  Macro features are NOT used in the logistic regression scorecard (Notebook 03).
+  In linear models, macro features confound with LC's growth trajectory across the
+  time-based split (e.g., UNRATE falls 2010→2015 while LC scales up, causing inverted
+  coefficient signs). Tree-based ML models handle this non-linearity correctly.
 
 ### Known Data Quirks (Confirmed from Full-File Profiling — All 2,260,701 Rows)
 - CSV has 33 footer/summary rows at end — drop rows where loan_amnt is null (leaves 2,260,668 usable)
@@ -262,50 +291,48 @@ role at LendingClub (Model Development / Loss Forecasting / Strategy teams).
 - Default rate after filtering: ~19.96%
 - `recoveries` and `collection_recovery_fee` exist — use for accurate LGD
 - benchmark_population_2014.csv available for external validation (200K records, JUN-AUG 2014)
+- **CRITICAL DATA LIMITATION:** Loan-level terminal outcomes only. No monthly payment history (PMTHIST file no longer publicly available).
 
-#### Confirmed Outlier Flags (from Full-File Numeric Ranges)
-- `annual_inc`: max = $110,000,000 — extreme outlier, cap at 99th percentile
-- `dti`: range [-1, 999] — negative DTI and 999 are data entry errors, cap/clean
-- `revol_util`: max = 892.3 — values >100% exist (over-limit accounts), investigate and cap
-- `revol_bal`: max = $2,904,836 — extreme outlier
-- `tot_coll_amt`: max = $9,152,545 — extreme outlier
-- `tot_cur_bal`: max = $9,971,659 — extreme outlier
-- `bc_util`: max = 339.6 — over 100%, investigate
-- `il_util`: max = 1,000 — extreme outlier, likely sentinel value
-- `all_util`: max = 239 — over 100%
-- `delinq_amnt`: max = $249,925 — extreme outlier
-- `tot_hi_cred_lim`: max = $9,999,999 — possibly capped/sentinel value
-- `total_rev_hi_lim`: max = $9,999,999 — possibly capped/sentinel value
-- `last_fico_range_high/low`: min = 0 — invalid FICO, needs handling (set to NaN or investigate)
-- `settlement_percentage`: max = 521.35 — above 100%, data quality issue
-- `policy_code`: all values = 1.0 — constant, zero variance, drop
-- `pymnt_plan`: all values = 'n' — constant, zero variance, drop
+### PD Models
+- Behavioral PD Scorecard — Logistic Regression (Notebook 03):
+  - Purpose: Behavioral scorecard for portfolio monitoring. These are loans already on books.
+    Grade is a known, observed attribute (not a model output).
+  - Features: WOE-transformed borrower characteristics INCLUDING grade
+    - Exclude int_rate (mechanically set by grade — near-perfect collinearity)
+    - Exclude sub_grade (finer version of grade — same collinearity issue)
+    - Exclude macro features (confound in linear models — reserved for ML and stress testing)
+  - Feature selection discipline:
+    - IV ≥ 0.05 threshold (not 0.02 — eliminates noise features)
+    - Pairwise |correlation| < 0.70 among selected WOE features
+    - Binary flags included only if IV ≥ 0.02
+    - Target: 10-15 final features (not 60)
+  - Coefficient sign rule: ALL WOE coefficients must be negative
+    (higher WOE = more good borrowers = lower default log-odds).
+    If any coefficient is positive after fitting, remove that feature and refit.
+  - L2 regularization (Ridge), hyperparameter tuned via 5-fold stratified CV
+  - Output: probability of default + scorecard points
+  - Target: AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
+  - RAG status: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
 
-### PD Model
-- **Scorecard:** Logistic regression with L2 (Ridge) regularization on WOE-transformed
-  features. L2 preferred because all features are pre-selected with IV>0.1 — we want all
-  features contributing with stable coefficients, not sparse elimination.
-- **Macro Covariates:** PD model MUST include macro features (unemployment, GDP, HPI, etc.)
-  alongside borrower characteristics. This is REQUIRED for the chronological out-of-time split
-  to generalize across economic regimes. Basel requires full economic cycle coverage; macro
-  features carry the cycle information. Without them: "FICO 680 defaults at 8%" (learned from
-  recession). With them: "FICO 680 defaults at 8% WHEN unemployment is 10%, but at 3% WHEN
-  unemployment is 4%". Interview framing: "included macroeconomic covariates so the model
-  learns the conditional relationship between borrower risk and the economic environment."
-- **Scorecard Format:** 600 base score, PDO=20 (points to double odds).
-- **ML Models:** XGBoost and LightGBM on original features with SHAP analysis. Macro features
-  also included as covariates.
-- **Conditional PD:** Monthly conditional PDs vary by borrower characteristics, macroeconomic
-  scenario, and loan age/MOB. These feed directly into DCF-ECL calculation. Under different
-  macro scenarios, same borrower gets different PD paths → different ECL.
+- ML PD Models — XGBoost / LightGBM (Notebook 04):
+  - Purpose: Performance ceiling model with all available information
+  - Features: all borrower features + grade + int_rate + sub_grade + macro features
+    Tree models handle collinearity natively through the tree structure
+  - XGBoost and LightGBM with Optuna tuning
+  - Macro features (UNRATE, CSUSHPINSA, etc.) are included as raw covariates
+  - SHAP analysis shows macro + borrower feature importance
+  - This is where macro features belong — tree models handle non-linear interactions
+    with LC's growth trajectory correctly
+  - Target: AUC ≥ 0.80, Gini ≥ 60%
 
 ### EAD & Prepayment
 - **EAD:** Use `out_prncp` (outstanding principal) for defaulted loans. NOT `revol_bal`.
   For term loans, EAD ≈ outstanding balance at time of default.
-- **Prepayment Model:** Build empirical prepayment rates from LendingClub data using issue_d,
-  last_pymnt_d, loan_status. Identify prepayments as Fully Paid loans with life significantly
-  shorter than contractual term. Competing risks: three outcomes (default, prepay, maturity).
-  Prepayment rates feed into DCF-ECL calculation.
+- **Prepayment Model:** Build empirical prepayment rates from LendingClub data using
+  issue_d, last_pymnt_d, loan_status, and term. Identify prepayments as Fully Paid loans
+  with actual life significantly shorter than contractual term. Use survival analysis or
+  empirical CPR lookup table (term × grade × vintage). Competing risks: three outcomes
+  (default, prepay, maturity). Prepayment rates feed into DCF-ECL calculation.
 
 ### LGD Model
 - **Two-Step Model:**
@@ -324,6 +351,33 @@ role at LendingClub (Model Development / Loss Forecasting / Strategy teams).
 
 ### ECL & Forecasting
 
+#### Synthetic Monthly Panel Construction
+- Loan-level data only provides terminal outcomes. To compute flow rates, reconstruct
+  approximate monthly DPD status from terminal outcomes:
+  - Fully Paid loans: assume Current every month until payoff. Last known balance = payoff
+  - Charged Off loans: assume Current until last_pymnt_d, then 30→60→90→120 DPD progression
+    to charge-off, back-calculating delinquency onset from last payment date
+  - Assign scheduled amortization balances for Current months; freeze balance for delinquent
+  - This produces ~50-60M rows (2.26M loans × ~24 avg months), requires chunked processing
+  - Output: data/processed/synthetic_monthly_panel.parquet
+  - Limitations: Curing (delinquent → current recovery) is unobservable. Flow rates are
+    forward-only (Current → 30+ → 60+ → ... → GCO). Balances for delinquent months are
+    approximate. In production with monthly payment tapes, curing and two-way transitions
+    would be observable.
+
+#### Forward Default Flow Rate Analysis
+- Compute flow rates from synthetic monthly receivables:
+  - Current → 30+ DPD
+  - 30+ → 60+ DPD
+  - ... continuing through each bucket to Gross Charge-Off
+  - Flow rates are one-directional only. No curing rates or two-way transitions (curing unobservable)
+- Flow Through Rate: product of all intermediate flow rates
+  - Example: 0.028 × 0.382 × 0.701 × 0.85 × 0.90 × 0.92 × 0.95 = 0.468%
+  - Interpretation: For every $100 in Current, approximately $0.47 will eventually charge off
+  - Use as cross-check against PD model outputs and early warning signal
+- Segment by grade and vintage
+- All flow rates derived from synthetic monthly panel reconstruction
+
 #### ECLProjector Class Design
 - **Constructor:** Takes only `pd_model` and `lgd_model` (no flow_rates dict parameter)
 - **New Method:** `compute_forecast_flow_rates(lookback_months=6)` computes 6-month rolling
@@ -340,6 +394,7 @@ Two methods for projection engine:
    - Simple, operationally practical
    - Used for AOP (Annual Operating Plan) / FRP (Financial Resource Planning) / internal planning
    - Assumes flow rates stabilize at recent average
+   - Flow rates are synthetically derived; dollar amounts are approximate
 
 2. **method='cecl' (ASC 326 COMPLIANT, REGULATORY MODE):**
    - Phase 1 (R&S period, default 24 months): macro-adjusted flow rates
@@ -349,14 +404,8 @@ Two methods for projection engine:
    - Phase 3 (Remaining horizon): pure historical averages, NO adjustment for current/future conditions
    - Preserves ASC 326 requirement that model reflects expected conditions but reverts
      to historical baseline for extended horizon
-
-#### Flow Through Rate
-- **Definition:** Flow Through Rate (Current → GCO) = product of all intermediate flow rates
-  e.g., 0.028 × 0.382 × 0.701 × 0.85 × 0.90 × 0.92 × 0.95 = 0.468%
-- **Interpretation:** For every $100 in Current, approximately $0.47 will eventually charge off
-- **Output:** Display on Streamlit dashboard as KPI metric
-- **Cross-check:** Use as validation against PD model outputs
-- **Monitoring:** Track trend over time — early warning signal if trending up
+   - Flow rates are synthetically derived; dollar amounts are approximate
+   - CECL-compliant implementation would require observed monthly DPD data
 
 #### Three ECL Views (Pre-FEG / Central / Post-FEG)
 - **Pre-FEG:** Pure model output — 6-month rolling avg flow rates, no macro overlay
@@ -365,7 +414,11 @@ Two methods for projection engine:
   plus qualitative adjustments
 - **Streamlit Toggle:** Radio buttons on ECL page; charts/tables/reserve numbers update accordingly
 - **Shows Impact:** Demonstrates effect of macro overlay and scenario weighting on final ECL
-- **IMPORTANT (NEW V5):** The Pre-FEG/Central/Post-FEG toggle is ORTHOGONAL to the forecasting mode (Operational vs. CECL). Both modes support all three FEG views. The difference: in Operational mode, stressed flow rates extend flat across the full horizon; in CECL mode, stressed rates only apply during Phase 1 (R&S period) and then revert during Phase 2/3. This is a great interview point: operational stress gives worst-case long-run trajectory; CECL stress is more conservative because it reverts.
+- The Pre-FEG/Central/Post-FEG toggle is ORTHOGONAL to the forecasting mode (Operational vs. CECL).
+  Both modes support all three FEG views. The difference: in Operational mode, stressed flow rates
+  extend flat across the full horizon; in CECL mode, stressed rates only apply during Phase 1
+  (R&S period) and then revert during Phase 2/3. This is a great interview point: operational stress
+  gives worst-case long-run trajectory; CECL stress is more conservative because it reverts.
 
 #### Simple ECL Baseline
 - ECL = PD × EAD × LGD (point-in-time, aggregated by segment)
@@ -376,7 +429,10 @@ Two methods for projection engine:
 - Apply prepayment assumptions and competing risks
 - Discount expected cash flows at effective interest rate
 - ECL = Contractual cash flows (NPV) - Expected cash flows (NPV)
-- **IMPORTANT (NEW V5):** The `recovery_rate` assumption in `set_assumptions()` should DEFAULT to the portfolio-level output of the LGD model (if LGD model estimates ~83% average LGD → default recovery_rate = 17%). The slider allows override for sensitivity testing. This connects the LGD model (loan-level) to the flow-rate projection engine (portfolio-level).
+- The `recovery_rate` assumption in `set_assumptions()` should DEFAULT to the portfolio-level output
+  of the LGD model (if LGD model estimates ~83% average LGD → default recovery_rate = 17%).
+  The slider allows override for sensitivity testing. This connects the LGD model (loan-level)
+  to the flow-rate projection engine (portfolio-level).
 
 ### Stress Scenarios
 - **Stress Application Level:** Adjust individual flow rates (e.g., increase each by 15%),
@@ -385,20 +441,27 @@ Two methods for projection engine:
   produces ~75% increase in cumulative flow-through (because 1.15^7 ≈ 2.66), vs. only 15% increase
   if applied to ECL output. Also changes loss timing curve shape (losses accelerate and concentrate
   under stress). This preserves non-linear dynamics of delinquency behavior.
-- **IMPORTANT (NEW V5):** Stress scenarios are independent of forecasting mode. In Operational mode, stressed flow rates extend flat across the full horizon for worst-case long-run trajectory. In CECL mode, stressed flow rates apply during Phase 1 only and then revert, providing more conservative but realistic reserving under extended time horizons.
+- **Stress Scenarios:** Stress is independent of forecasting mode. In Operational mode, stressed flow
+  rates extend flat across the full horizon for worst-case long-run trajectory. In CECL mode, stressed
+  flow rates apply during Phase 1 only and then revert, providing more conservative but realistic
+  reserving under extended time horizons.
+- **Note on Synthetic Base:** Flow rate stress is applied to synthetically derived rates.
+  The compounding math is correct. Dollar amounts are approximate.
 
 ### Liquidation Factor Design
 Two modes:
 
 1. **Operational Mode (default):** Single portfolio-level liquidation factor, set via Streamlit slider.
    Simple, matches PyCraft. Example: "3.2% monthly liquidation" applied flat.
-   - **IMPORTANT (NEW V5):** In Operational mode, both Liquidation Factor and New Originations inputs are shown to the user.
+   - In Operational mode, both Liquidation Factor and New Originations inputs are shown to the user.
 
 2. **CECL Mode:** Differentiated by loan term (36 vs 60 months) and vintage age. Empirical
    paydown curves computed from LendingClub data. Interview framing: "PyCraft used portfolio-level
    because it was operational planning. I also built CECL-aligned version where prepayment rates
    vary by term and vintage."
-   - **IMPORTANT (NEW V5):** In CECL mode, only Liquidation Factor is shown; New Originations is hidden (hardcoded to $0) because CECL reserves are calculated on the existing portfolio only — new loans get their own Day 1 CECL assessment at origination.
+   - In CECL mode, only Liquidation Factor is shown; New Originations is hidden (hardcoded to $0)
+     because CECL reserves are calculated on the existing portfolio only — new loans get their own
+     Day 1 CECL assessment at origination.
 
 ### Assumption Input UI Design
 - **Streamlit Frontend:** PRIMARY interface with sliders, inputs, dropdowns for interactive exploration
@@ -409,8 +472,10 @@ Two modes:
 ## Validation Metrics
 - AUC, Gini, KS, PSI (<0.1 green, 0.1-0.25 amber, >0.25 red),
   CSI, VDI, Hosmer-Lemeshow, calibration plots, out-of-time validation.
+- PD model metrics (AUC, Gini, KS, PSI) are fully based on real observed data.
+- ECL backtesting uses synthetically derived flow rates.
 
-## External Benchmark Validation (NEW V4)
+## External Benchmark Validation
 - **File:** benchmark_population_2014.csv (200,000 records)
 - **Contains:** FICO scores, delinquency buckets (CURRENT, 30_DPD, 60_DPD), PERFORMANCE_OUTCOME (GOOD/BAD)
 - **Period:** JUN-AUG 2014
@@ -430,11 +495,14 @@ Two modes:
 ## Prior Role Experience Connections (reference in notebook markdown)
 - WOE/IV → Credit card behavioral scorecard monitoring Q4'22
 - Scorecard + RAG → Behavioral scorecard RAG status framework
-- Macro Integration → FEG scenarios with GDP/HPI/unemployment weights
+- Macro Integration → FEG scenarios with GDP/HPI/unemployment weights (ML models and stress testing only)
 - Validation (Gini/PSI/CSI/VDI) → Quarterly model monitoring
 - Vintage Analysis → Sherwood PD curves by mortgage product × MOB
-- Roll-Rate / Flow-Rate Analysis → Loss forecasting receivables tracker (flow rates computed as simple bucket ratios, not account-level transition matrices)
-- Prepayment Model → Empirical prepayment curves from historical data
+- Prepayment Model → Empirical curves from historical data; competing risks framework
+- Synthetic Monthly Panel → Reconstructed monthly DPD status from terminal outcomes for flow rate computation
+- Roll-Rate / Flow-Rate Analysis → Forward default flow rates from synthetic receivables tracker
+  (one-directional only; curing unobservable)
+- Flow Through Rate → Cross-check against PD, early warning signal
 - ECL/CECL → ALLL tracker, Pre-FEG/Central/Post-FEG computation
 - Forecasting Tool → PyCraft (Django-based loss forecasting tool) with dual operational/regulatory modes
 - Liquidation Factors → Portfolio-level (operational) vs. differentiated by term/vintage (CECL)
@@ -462,7 +530,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - File: accepted_2007_to_2018Q4.csv (1.6 GB)
    - Total rows in file: 2,260,701 (includes 33 footer/summary rows)
 
-2. **Footer Row Removal (NEW V4):**
+2. **Footer Row Removal:**
    - After loading CSV, drop rows where `loan_amnt` is null or non-numeric
    - The raw file has 33 summary/footer rows at the end that are not loan records
    - This leaves exactly 2,260,668 usable loan records
@@ -473,7 +541,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - **DROP** all other statuses ('Current', 'In Grace Period', 'Late (16-30)', 'Late (31-120)', 'Does not meet credit policy: Fully Paid', 'Does not meet credit policy: Charged Off') — right-censored observations that bias PD downward
    - Terminal loans for modeling: 1,345,350 (268,599 defaults = 19.96% default rate)
 
-4. **Immediate Column Drops (NEW V4 - from profiling):**
+4. **Immediate Column Drops:**
 
    a) **14 completely empty sec_app_* columns (100% null):**
       - sec_app_fico_range_low, sec_app_fico_range_high, sec_app_earliest_cr_line, sec_app_inq_last_6mths, sec_app_mort_acc, sec_app_open_acc, sec_app_revol_util, sec_app_open_act_il, sec_app_num_rev_accts, sec_app_chargeoff_within_12_mths, sec_app_collections_12_mths_ex_med, sec_app_mths_since_last_major_derog, revol_bal_joint, member_id
@@ -484,7 +552,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    c) **Non-feature columns:**
       - id, url, desc (94.42% empty), pymnt_plan (all 'n'), policy_code (all 1)
 
-5. **Data Type Fixes (NEW V4 - exact details):**
+5. **Data Type Fixes:**
 
    a) **`term` column:** Strip leading spaces → ' 36 months' becomes '36 months'; then extract integer (36 or 60)
 
@@ -500,7 +568,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
    d) **`int_rate` and `revol_util`:** Already float64 — NO % stripping needed (confirmed from profiling)
 
-6. **Missingness-based drops (>40% missing) (NEW V4 - exact percentages):**
+6. **Missingness-based drops (>40% missing):**
    - mths_since_last_delinq (48.19% missing — but DON'T drop: create no_delinq_history flag)
    - mths_since_recent_revol_delinq (64.09%)
    - mths_since_last_major_derog (70.63%)
@@ -520,7 +588,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - `emp_length` missing → create "unknown" category
    - `annual_inc` missing → investigate and drop if very few
 
-8. **Feature categorization (NEW V4 - ~30 credit bureau features acknowledged):**
+8. **Feature categorization (~30 credit bureau features acknowledged):**
    - Borrower: `annual_inc`, `emp_length`, `home_ownership`, `verification_status`
    - Credit history: `fico_range_low/high`, `earliest_cr_line`, `open_acc`, `total_acc`, `revol_util`, `revol_bal`, `pub_rec`, `delinq_2yrs`, `inq_last_6mths`, `mths_since_last_delinq`
    - Account activity: `num_actv_bc_tl`, `num_actv_rev_tl`, `num_bc_sats`, `num_bc_tl`, `num_il_tl`, `num_op_rev_tl`, `num_rev_accts`, `num_rev_tl_bal_gt_0`, `num_sats`, `num_tl_op_past_12m`, `acc_open_past_24mths`
@@ -532,7 +600,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Loan: `loan_amnt`, `term`, `int_rate`, `grade`, `sub_grade`, `purpose`, `installment`
    - Geographic: `addr_state`, `zip_code`
 
-9. **Merge macroeconomic data from FRED API (CRITICAL FOR TIME-BASED SPLIT):**
+9. **Merge macroeconomic data from FRED API:**
    - Pull 6 FRED series by origination month (issue_d):
      - **UNRATE**: Unemployment rate (monthly)
      - **CSUSHPINSA**: Case-Shiller Home Price Index (monthly, not seasonally adjusted)
@@ -543,7 +611,6 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Merge onto loan data by origination month using `issue_d`
    - Handle quarterly (GDP) data by carrying forward values within each quarter
    - Start with origination-time macro merge (mandatory); performance-period merge as optional enhancement
-   - **WHY CRITICAL:** Without macro covariates, the model would overpredict defaults on 2016-2018 test data because it learned recession-era rates as structural truths. Time-based split requires macro context.
    - Add these macro features to output parquet files for use in subsequent notebooks
 
 10. **EDA deliverables:**
@@ -586,8 +653,8 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - IV 0.02-0.1: Weak → consider dropping
    - IV 0.1-0.3: Medium → include
    - IV 0.3-0.5: Strong → include
-   - IV > 0.5: Suspicious → investigate for data leakage (e.g., `int_rate` and `grade` will have very high IV because they're assigned based on credit risk — decide whether to include)
-   - **IMPORTANT:** Include macro variables (UNRATE, HPI, GDP, etc.) in WOE binning. These will have high IV because they correlate strongly with defaults, and that's exactly what we want for scenario-conditional PD models.
+   - IV > 0.5: Suspicious or strong → investigate for data leakage or legitimacy (e.g., `grade` will have very high IV because it's assigned based on credit risk — INCLUDE in behavioral scorecard context)
+   - **IMPORTANT:** Include grade in WOE binning. Grade is a behavioral feature for portfolio monitoring.
 
 3. **Feature engineering:**
    - `credit_history_years` = years since `earliest_cr_line`
@@ -600,7 +667,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - `high_dti_flag` = 1 if dti > 30
    - `no_delinq_history` = 1 if mths_since_last_delinq is missing
 
-4. **Validate monotonicity:** Bad rate should increase/decrease monotonically across WoE bins. Flag any rank-ordering breaks (just as you flagged in the RAG framework at my prior institution).
+4. **Validate monotonicity:** Bad rate should increase/decrease monotonically across WoE bins. Flag any rank-ordering breaks.
 
 5. **Generate WOE/IV summary table** for all features — this becomes a key deliverable.
 
@@ -608,18 +675,21 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 ---
 
-#### Days 5-7: PD Models — Scorecard + ML Ensemble
+#### Days 5-7: PD Models — Behavioral Scorecard + ML Ensemble
 
-**Notebook: `03_PD_Model_Scorecard.ipynb`**
+**Notebook: `03_PD_Model_Scorecard.ipynb`** — Behavioral PD Scorecard
 
-**Prior Role Connection:** This is the culmination of your behavioral scorecard experience — but now you're building the scorecard from scratch rather than monitoring an existing one.
+**Prior Role Connection:** This is the culmination of your behavioral scorecard experience — but now you're building the scorecard from scratch rather than monitoring an existing one. This is a behavioral scorecard: the loan is already on the books, so grade is a known attribute.
 
 1. **Logistic regression scorecard with WOE features:**
-   - Input: WOE-transformed features (only those with IV > 0.1), **including macro features**
+   - Input: WOE-transformed features with IV ≥ 0.05, **including grade**
+   - **EXCLUDE** int_rate and sub_grade (collinear with grade)
+   - **EXCLUDE** macro features (confound in linear models — reserved for ML and stress testing)
+   - Feature selection: IV ≥ 0.05, pairwise |correlation| < 0.70, target 10-15 final features
+   - Binary flags only if IV ≥ 0.02
    - L2 regularization (Ridge) — rationale: features are pre-selected and economically justified; we want stable coefficients keeping all features, not sparse elimination
    - Use sklearn's LogisticRegression with penalty='l2', tune C via cross-validation
-   - Verify all coefficients are negative (higher WoE = lower risk = lower PD)
-   - **MACRO INTEGRATION:** Include unemployment, HPI, GDP as covariates. Their coefficients will show how PD changes with economic regime.
+   - **All WOE coefficients must be negative** — if any is positive, remove that feature and refit
 
 2. **Convert to scorecard points:**
    - Base score: 600, PDO (Points to Double Odds): 20
@@ -627,13 +697,14 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Factor = PDO / ln(2)
    - Offset = Base_Score - Factor × ln(Base_Odds)
    - Generate scorecard table: Feature → Bin → WoE → Points
-   - **Include macro feature point contributions** so you can show "in recession, same borrower scores 15 points lower"
+   - Grade should have the largest point spread (strongest discriminator)
 
 3. **Credit policy analysis (THE STRATEGY LAYER):**
    - Plot score distribution for good vs. bad accounts
    - For different score cutoffs, compute: approval rate, expected default rate, expected loss rate
    - Build an **approval rate vs. expected loss tradeoff curve**
-   - Identify the optimal cutoff that maximizes risk-adjusted return
+   - Identify the optimal cutoff that maximizes: approval_rate × (1 - default_rate)
+   - The optimal cutoff should NOT be the minimum score (100% approval = no discrimination)
    - This is what LendingClub's Credit Strategy team does daily
 
 4. **Grade mapping:**
@@ -641,33 +712,31 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Compare your model's grade assignment with actual grades in data
    - Analyze mis-grades (accounts your model would grade differently)
 
-5. **Scenario-conditional PD:**
-   - Generate PD estimates under different macro scenarios (Baseline, Mild Downturn, Stress)
-   - Show same borrower's PD under different unemployment levels
-   - Frame: "the scorecard is agnostic to macro conditions; it scores 620 regardless. But when we input macro features into the PD model, the same borrower has 3% PD in Baseline but 5.2% in Stress scenario."
-
-6. **RAG status framework:**
-   - Define thresholds: Gini ≥ 60% (Green), 50-60% (Amber), <50% (Red)
+5. **RAG status framework:**
+   - Define thresholds: Gini ≥ 55% (Green), 45-55% (Amber), < 45% (Red)
    - Compute Gini on train, validation, and test separately
    - Report RAG status per time period — mirrors your quarterly monitoring at my prior institution
 
-**Metrics targets:** AUC ≥ 0.75, Gini ≥ 55%, KS ≥ 30%
+**Metrics targets:** AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
 
-**Output files:** `pd_logreg_model.pkl`, `scorecard_table.csv`, `pd_scorecard_metrics.json`, `conditional_pd_by_scenario.csv`
+**Output files:** `pd_logreg_model.pkl`, `scorecard_table.csv`, `pd_scorecard_metrics.json`, `credit_policy_analysis.csv`
 
 ---
 
-**Notebook: `04_PD_Model_ML_Ensemble.ipynb`**
+**Notebook: `04_PD_Model_ML_Ensemble.ipynb`** — Performance Ceiling Models
+
+**Context Note:** This is where macro features, int_rate, and sub_grade are included alongside grade for maximum predictive power. The ML models serve as the performance ceiling — tree-based models handle the non-linear interactions between macro features and LC's growth trajectory that caused problems in the logistic regression scorecard.
 
 1. **XGBoost model:**
    - Input: original features (not WOE-transformed) — XGBoost handles non-linear relationships natively
-   - **Include macro features as original columns** (UNRATE, HPI, GDP, etc.)
-   - Hyperparameter tuning via Optuna (n_estimators, max_depth, learning_rate, subsample, colsample_bytree, min_child_weight, reg_alpha, reg_lambda)
+   - **Include grade, int_rate, sub_grade** — collinearity handled by tree structure
+   - **Include all 6 macro features** — tree models capture non-linear interactions correctly
+   - Hyperparameter tuning via Optuna
    - SHAP analysis: global feature importance + individual prediction explanations
    - Show macro variables in top SHAP features
 
 2. **LightGBM model:**
-   - Same feature set as XGBoost (including macro features)
+   - Same feature set as XGBoost (including grade, int_rate, sub_grade, macro features)
    - Compare training speed and performance
 
 3. **Model comparison table:**
@@ -679,13 +748,9 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    | Gini (Test) | | | |
    | KS Statistic | | | |
    | Overfit Gap | | | |
+   | N Features | 10-15 | All | All |
 
-4. **Scenario sensitivity analysis:**
-   - Generate PD predictions under Baseline, Mild Downturn, Stress macro scenarios using XGBoost
-   - Show how predictions shift as unemployment/GDP change
-   - Compare to scorecard's scenario-conditional output
-
-5. **Discussion:** Why would LendingClub use the scorecard for production credit decisions despite lower AUC? (Interpretability, regulatory requirements, monotonicity constraints, model governance — connect to your prior institution experience with model review by Independent Model Review Team and OCC submission.)
+4. **Discussion:** Why would LendingClub use the scorecard for production credit decisions despite lower AUC? (Interpretability, regulatory requirements, monotonicity constraints, model governance — connect to your prior institution experience.)
 
 **Metrics targets:** XGBoost AUC ≥ 0.80, KS ≥ 35%
 
@@ -718,12 +783,12 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 **Prior Role Connection:** LGD model at my prior institution used Basel III assumptions. At LendingClub, recoveries are tracked explicitly. The 10-K shows $49M recovery asset value against $286M gross ALLL → ~17% recovery rate → LGD ≈ 83%.
 
-1. **Two-step LGD model (IMPORTANT NAMING CHANGE V3):**
+1. **Two-step LGD model:**
    - **Step 1 (Classification Phase):** Logistic regression — did any recovery occur? (recovery_flag = 1 if recoveries > 0)
    - **Step 2 (Regression Phase):** For loans with recovery > 0, predict recovery rate using Beta regression
    - LGD = 1 - (P(recovery) × E[recovery_rate | recovery > 0])
 
-2. **More accurate LGD formula (NEW V4):**
+2. **More accurate LGD formula:**
    - **Primary formula:** LGD = 1 - ((recoveries - collection_recovery_fee) / EAD)
      - `recoveries`: post-charge-off cash recovered (100% populated for all loans)
      - `collection_recovery_fee`: fee paid to recovery agent (100% populated)
@@ -739,31 +804,44 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 ---
 
-#### Days 10-11: ECL Computation, Vintage Analysis, Prepayment Model & Roll Rates
+#### Days 10-11: ECL Computation, Vintage Analysis, Prepayment Model & Flow Rates
 
 **Notebook: `07_ECL_Computation_and_Vintage_Analysis.ipynb`**
 
-**Prior Role Connection:** This is the core of your Loss Forecasting team experience. The receivables tracker, ALLL computation, vintage analysis, and roll-rate matrices are exactly what you built at my prior institution for $18B+ in mortgage portfolios. NEW IN V3: Prepayment model and competing risks framework.
+**Prior Role Connection:** This is the core of your Loss Forecasting team experience. The receivables tracker, ALLL computation, vintage analysis, and flow-rate matrices are exactly what you built at my prior institution for $18B+ in mortgage portfolios. Competing risks framework for prepayment is integrated.
 
-1. **Prepayment Model (NEW in V3 - add before ECL section):**
+**CRITICAL DATA LIMITATION:** The LendingClub dataset provides loan-level terminal outcomes, not monthly payment history. This requires synthetic monthly panel construction.
+
+1. **Synthetic Monthly Panel Construction (New Component):**
+   - Before computing flow rates, reconstruct approximate monthly DPD status from terminal outcomes
+   - For each loan, create one row per month from `issue_d` to:
+     - `last_pymnt_d` for Fully Paid loans
+     - Estimated charge-off date for Charged Off loans
+   - Back-calculate: Fully Paid = current every month. Charged Off = current until delinquency onset (last_pymnt_d + 1 month), then 30→60→90→120 DPD progression to charge-off
+   - Assign scheduled amortization balances
+   - Output: ~50-60M rows, needs chunked processing
+   - Output: data/processed/synthetic_monthly_panel.parquet
+   - Document assumptions: "Performing loans assumed current until payoff. Defaulted loans back-calculated from last payment date. Curing is unobservable. Intermediate delinquencies for eventually-performing loans are invisible."
+
+2. **Prepayment Model:**
    - **Goal:** Model competing risks — loans can default, prepay, or reach maturity
    - **Data:** Use `issue_d` (origination), `last_pymnt_d` (last payment), `loan_status`, `term` (36 or 60 months)
    - **Prepayment Identification:** Fully Paid loans with actual life < contractual term
      - Example: 60-month term loan that was Fully Paid in month 48 = prepayment
-   - **Empirical Prepayment Rates:** Compute by term (36 vs 60 months) and vintage year
+   - **Empirical Prepayment Rates:** Compute by term (36 vs 60 months) and vintage year using CPR lookup tables
    - **Competing Risks Framework:**
      - Three outcomes: Default (before maturity), Prepay (early full repayment), Maturity (reach end of term and pay off)
      - Quarterly prepayment rates feed into DCF-ECL as alternative cash flow scenario
    - **Integration into ECL:** For each loan, survival analysis considers both default and prepayment hazards
    - **Interview Framing:** "LendingClub has significant prepayment risk; ignoring it would overstate expected loss. I built a competing risks model to separately estimate default vs prepay rates."
 
-2. **Simple ECL baseline:**
+3. **Simple ECL baseline:**
    - ECL = PD × EAD × LGD (point-in-time, aggregated by segment)
    - Compute by grade (A-G), by vintage year, by purpose
    - Portfolio-level ALLL ratio = total ECL / total outstanding balance
    - Compare to LendingClub 10-K ALLL ratio (5.7%)
 
-3. **DCF-based ECL (mirrors LendingClub 10-K):**
+4. **DCF-based ECL (mirrors LendingClub 10-K):**
    - For each loan pool (by grade), project monthly cash flows over remaining life
    - Apply monthly marginal PD (conditional on macro scenario) to determine timing of defaults
    - Apply prepayment assumptions (from competing risks model)
@@ -771,43 +849,44 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - ECL = Contractual cash flows (NPV) - Expected cash flows (NPV)
    - This is the approach LendingClub explicitly uses per their 10-K
 
-4. **Vintage analysis:**
+5. **Vintage analysis:**
    - Cumulative default rate by origination year, plotted against MOB
    - This directly mirrors the Sherwood PD curves you built at my prior institution (Product Type × MOB grid)
    - Identify which vintages are performing better/worse than expected
    - Compute smoothed marginal PD curves (6-month rolling average, as you did at my prior institution)
    - **Macro Context:** Overlay macro variables (unemployment, HPI) at origination to explain vintage differences
 
-5. **Flow-rate analysis (NOT account-level transition matrices):**
-   - **Important distinction:** The industry often conflates "roll rates" and "flow rates." True roll rates track individual accounts across buckets (requires account-level longitudinal data). Flow rates simply compare consecutive bucket balances in consecutive months. Even the OCC's Comptroller's Handbook acknowledges that most banks use the flow rate approach in practice.
+6. **Forward Default Flow Rate Analysis (Synthetic Reconstruction):**
    - Build the **Receivables Tracker** in institutional format: monthly dollar balances by DPD bucket (Current, 30+, 60+, 90+, 120+, 150+, 180+) with account counts, GCO, Recovery, NCO
-   - Compute **flow rates** as simple ratios displayed below the dollar receivables:
+   - Compute **flow rates** as simple ratios (one-directional only):
      - 30+ Flow Rate = 30 DPD balance (this month) / Current balance (last month)
      - 60+ Flow Rate = 60 DPD balance (this month) / 30 DPD balance (last month)
-     - 90+ Flow Rate = 90 DPD balance (this month) / 60 DPD balance (last month)
+     - 90+ Flow Rate = 90 DPD balance (this month) / 60 DPD balance (this month)
      - ...continuing through each bucket to GCO
-   - **Flow Through Rate (NEW V3 KPI):** Product of all intermediate flow rates
+   - **Flow Through Rate:** Product of all intermediate flow rates
      - Example: 0.028 × 0.382 × 0.701 × 0.85 × 0.90 × 0.92 × 0.95 = 0.468%
      - Interpretation: For every $100 in Current, approximately $0.47 will eventually charge off
      - Use as cross-check against PD model outputs
      - Track trend over time — early warning signal if trending up
+   - Flow rates are forward-only: Current → 30+ → 60+ → ... → GCO
+   - **CRITICAL:** No curing rates or two-way transition matrices (curing is unobservable in loan-level data)
    - Segment by grade and by vintage
-   - Track flow rate trends over time — identify acceleration patterns (when flow rates spike)
+   - Track flow rate trends over time — identify acceleration patterns
    - These flow rates feed directly into the Streamlit forecasting tool's projection engine
-   - **Optional enhancement:** Since we have account-level data in LendingClub, we CAN also compute a simplified transition matrix as a "model development view" — but position this as analytical context, not the primary forecasting mechanism
+   - **Data Limitation Documentation:** "Flow rates derived from synthetic monthly panel reconstruction. Curing is unobservable. Flow rates represent forward transitions only. Balances are approximate for delinquent months. In a production environment with monthly payment tapes, curing rates and two-way transition matrices would be observable."
 
-6. **ALLL tracker:**
+7. **ALLL tracker:**
    - Monthly ECL reserve level
    - Reserve build vs. release (ΔECL = provision expense)
    - NCO coverage ratio = ALLL / annualized NCO
    - Connect to prior role ALLL tracker work
 
-7. **Three ECL views (from FEG framework):**
+8. **Three ECL views (from FEG framework):**
    - **Pre-FEG:** Pure model output with no macro overlay — uses historical average PD/flow rates
    - **Central:** Model output with base-case macro scenario applied — applies Baseline scenario adjustments
    - **Post-FEG:** Weighted average across all scenarios (Baseline 60%, Mild Downturn 25%, Stress 15%) plus qualitative adjustments
 
-**Output files:** `ecl_by_grade.csv`, `ecl_by_vintage.csv`, `receivables_tracker.csv`, `flow_rates.csv`, `vintage_curves.csv`, `prepayment_rates_by_term.csv`, `flow_through_rate.json`
+**Output files:** `ecl_by_grade.csv`, `ecl_by_vintage.csv`, `receivables_tracker.csv`, `flow_rates.csv`, `vintage_curves.csv`, `prepayment_rates_by_term.csv`, `flow_through_rate.json`, `synthetic_monthly_panel.parquet`
 
 ---
 
@@ -847,7 +926,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - This mirrors the benchmark population approach from my prior role (June-Aug 2014 benchmark)
    - **Scenario Validation:** For each vintage, compare predicted PD (with origination macro) to actual default rate
 
-5. **External Benchmark Validation (NEW V4):**
+5. **External Benchmark Validation:**
    - Load benchmark_population_2014.csv (200,000 records)
    - Score population on your developed models
    - Compute PSI: Compare score distribution in benchmark to training population
@@ -856,9 +935,10 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Document in notebook: "This mirrors a benchmark validation approach from my prior role where we compared model scores and outcomes to a known cohort"
 
 6. **Backtesting:**
-   - Predicted ECL vs. actual realized losses by vintage
+   - Reframe as: Predicted cumulative default rate vs actual cumulative default rate by vintage (not flow-rate-based ECL vs actual losses)
    - By grade: are we over/under-reserving for any segment?
    - Prepayment backtesting: predicted vs. actual prepayment rates by term
+   - Note: PD model metrics (AUC, Gini, KS, PSI) are fully based on real observed data. ECL backtesting uses synthetically derived flow rates.
 
 ---
 
@@ -878,13 +958,14 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - **Stress (15%):** Unemployment +3pp, GDP -3% (recession scenario)
    - Weighted average ECL = Σ(weight_i × ECL_i)
 
-3. **Flow Rate Stress (NEW V3 - CRITICAL):**
+3. **Flow Rate Stress:**
    - **Application Level:** Adjust individual flow rates (e.g., increase each by 15%), NOT applied as a multiplier on final ECL output
    - **Why:** Compounding through the waterfall is multiplicative. A 15% stress on each flow rate produces ~75% increase in cumulative flow-through (because 1.15^7 ≈ 2.66), vs. only 15% increase if applied to ECL output. Also changes loss timing curve shape (losses accelerate and concentrate under stress). This preserves non-linear dynamics of delinquency behavior.
    - **Implementation:** For each scenario, adjust each flow rate by scenario-specific factor:
      - Baseline: 1.0× (no adjustment)
      - Mild Downturn: 1.10× (10% increase in each flow rate)
      - Stress: 1.20× (20% increase in each flow rate)
+   - **Note on Synthetic Base:** Flow rate stress is applied to synthetically derived rates. The compounding math is correct. Dollar amounts are approximate.
 
 4. **Mean reversion for extended horizon:**
    - Explicit macro forecast: 8 quarters (2 years)
@@ -918,11 +999,12 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 1. **Portfolio Overview Dashboard** — KPIs, composition, default rates by grade/vintage/state
 
 2. **Roll-Rate Analysis** — Receivables tracker with flow rates, delinquency flow visualization
+   - Add sidebar disclaimer: "Flow rates derived from synthetic monthly panel reconstruction. Production implementation would use observed monthly payment data."
 
 3. **Vintage Performance** — Cumulative default curves by vintage × MOB (Sherwood-style)
 
 4. **ECL Forecasting Engine** — The PyCraft core with dual-mode toggle:
-   - **Dual-Mode Forecasting (NEW V3):**
+   - **Dual-Mode Forecasting:**
      - Radio button: "Operational Forecast (Extend)" vs. "CECL Reserve Estimation (CECL)"
      - **Operational Mode (extend):**
        - Uses 6-month rolling average flow rates extended flat across 10-year projection
@@ -935,17 +1017,19 @@ This is the PyCraft-equivalent tool. The high-level pages are:
        - Shows "What's the regulatory-compliant ECL under this scenario?"
    - Tables: Monthly projections of Current, 30+, 60+, ..., 180+, GCO, NCO, ECL
    - Charts: Waterfall of balances, GCO/NCO timeline, ECL progression
-   - **Flow Through Rate Display (NEW V3):** Show as KPI metric and trend chart
-   - **Assumption Inputs (NEW V3):**
+   - **Flow Through Rate Display:** Show as KPI metric and trend chart
+   - **Assumption Inputs:**
      - Streamlit sliders for: liquidation factor (%), prepayment rate (%), discount rate (%)
      - "Upload Assumptions" button: accepts Excel in institutional format
      - "Export Assumptions" button: downloads current settings
      - Dropdown to select macro scenario (Baseline, Mild Downturn, Stress)
+   - Add sidebar disclaimer: "Flow rates derived from synthetic monthly panel reconstruction. Production implementation would use observed monthly payment data."
 
 5. **Scenario Analysis** — FRED integration, scenario weights, sensitivity analysis
-   - Show Pre-FEG/Central/Post-FEG toggle (NEW V3)
+   - Show Pre-FEG/Central/Post-FEG toggle
    - Charts: ECL under each scenario, sensitivity tornado (impact on ECL)
    - Macro variable forecasts from FRED
+   - Add sidebar disclaimer: "Flow rates derived from synthetic monthly panel reconstruction. Production implementation would use observed monthly payment data."
 
 6. **Model Monitoring** — Gini/PSI/CSI/VDI tracking with RAG status
 
@@ -955,26 +1039,35 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 
 1. **Clean all notebooks:**
    - Add markdown explanations connecting each section to prior role experience
-   - Document macro feature integration and why it's critical
+   - Document macro feature integration and why it's used in ML/stress but not scorecard
    - Explain competing risks (prepayment) integration
-   - Clarify LGD terminology change (Step 1/Step 2)
+   - Clarify LGD terminology (Step 1/Step 2)
+   - Document synthetic panel construction and limitations
 
 2. **README.md:** Frame around portfolio strategy and loss forecasting, not just modeling
-   - Highlight macro integration
+   - Highlight macro integration in ML and stress testing
    - Explain dual-mode forecasting
    - Document prepayment model
+   - **Add Data Limitations section:**
+     - The LendingClub public dataset has loan-level terminal outcomes, no monthly payment history
+     - Monthly DPD status is synthetically reconstructed
+     - Flow rates are forward-only (curing unobservable)
+     - PD, EAD, LGD models use real observed data
+     - Framework is production-ready; only input granularity differs
    - Include screenshots of Streamlit pages
 
-3. **CLAUDE.md:** Already done in this V5 roadmap — embed it in project root
+3. **CLAUDE.md:** Already done in this V6 roadmap — embed it in project root
 
 4. **GitHub repository:** Clean commit history, proper .gitignore, requirements.txt with pinned versions
 
 5. **Interview prep:** Walk through every model decision and connect to prior role experience:
-   - "Why macro features in PD model?" → Time-based split, economic regimes
+   - "Why grade in scorecard?" → Behavioral scorecard, loan already on books, grade is known attribute
+   - "Why macro in ML but not scorecard?" → Linear model confounding with LC growth trajectory; tree models handle non-linearity correctly
    - "Why prepayment model?" → Competing risks, LendingClub has significant prepayment
    - "Why dual-mode forecasting?" → Operational (PyCraft) vs. regulatory (CECL) needs
    - "Why stress at flow rate level?" → Multiplicative dynamics
    - "Flow Through Rate?" → Cross-check against PD, early warning
+   - "Why synthetic panel?" → Answered in talking points below
 
 ---
 
@@ -982,8 +1075,9 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 
 | Component | Metric | Target |
 |-----------|--------|--------|
-| PD Scorecard (LogReg) | Gini | ≥ 55% |
-| PD Scorecard (LogReg) | AUC | ≥ 0.75 |
+| PD Behavioral Scorecard | Gini | ≥ 50% |
+| PD Behavioral Scorecard | AUC | ≥ 0.75 |
+| PD Behavioral Scorecard | KS | ≥ 35% |
 | PD XGBoost | AUC | ≥ 0.80 |
 | PD XGBoost | KS | ≥ 35% |
 | EAD Model | MAPE | < 15% |
@@ -1000,28 +1094,29 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 
 | Project Component | Prior Role Experience | How to Discuss in Interview |
 |-------------------|----------------|----------------------------|
-| Macro Feature Integration | FEG scenarios with unemployment, GDP, HPI; PD model includes macro covariates | "I built models that learned conditional PD relationships — the same borrower has different risk in different economic regimes. FRED data was essential for time-based validation." |
-| PD Scorecard + Macro | Behavioral scorecard with economic cycle context | "The scorecard is the policy tool, but macro features in the PD model capture regime shifts. This is how LendingClub goes beyond static risk assessment." |
-| Prepayment Model | Empirical curves from historical payment data | "LendingClub has significant prepayment — ignoring it would overstate ECL. I built a competing risks model to separately estimate default vs. prepay hazards." |
+| Macro Feature Integration | FEG scenarios with unemployment, GDP, HPI in ML and stress testing | "I built models that learned conditional PD relationships — the same borrower has different risk in different economic regimes. Macro features are essential for scenario testing and stress analysis, handled properly in tree models." |
+| PD Behavioral Scorecard | Behavioral scorecard with grade as strongest predictor. Macro reserved for ML. | "The behavioral scorecard monitors loans already on books — grade is an observed attribute. For economic cycle effects, we use the ML PD model and stress testing framework rather than forcing macro features into a linear model." |
+| Prepayment Model | Empirical curves from historical data; competing risks framework | "LendingClub has significant prepayment — ignoring it would overstate ECL. I built a competing risks model to separately estimate default vs. prepay hazards." |
+| Synthetic Monthly Panel | Reconstructed monthly DPD status from terminal outcomes for flow rate computation | "The public LendingClub dataset provides loan-level terminal outcomes, not monthly payment tapes. I reconstructed approximate monthly DPD status using the amortization schedule and charge-off timing. This captures the forward default cascade reliably, but cannot observe curing events." |
 | WOE/IV Feature Engineering | Q4'22 Credit Card Behavioral Scorecard — computed WoE, IV for VantageScore/FICO bins, utilization, DTI, inquiries, open tradelines | "I monitored these exact metrics quarterly for a $230M+ credit card portfolio" |
-| Scorecard + RAG Framework | Behavioral scorecard with Gini ≥60% threshold, RAG status reporting to stakeholders | "I defined and tracked RAG status for model performance, escalating Amber/Red flags" |
+| Scorecard + RAG Framework | Behavioral scorecard with Gini ≥55% threshold, RAG status reporting to stakeholders | "I defined and tracked RAG status for model performance, escalating Amber/Red flags" |
 | Model Validation (Gini/PSI/CSI/VDI) | Quarterly model monitoring with performance windows (6mo) and stability windows (3mo) | "I used 6-month performance windows and 3-month stability windows to assess model drift" |
-| Vintage Analysis | Sherwood Lifetime Loss — marginal/cumulative PD curves by mortgage product (Fixed 15/30, ARM 3/5/7/10) × MOB | "I built PD curves by product type and MOB for mortgage portfolios, smoothed with 6-month rolling averages, and related them to macro conditions at origination" |
-| Flow-Rate / Roll-Rate Analysis | Loss Forecasting receivables tracker — Current→30→60→90→120→150→180 DPD for $18B+ in portfolios. Flow rates computed as simple bucket-to-bucket ratios (e.g., 60+ flow rate = 60 DPD this month / 30 DPD last month), displayed below dollar receivables in tracker | "I tracked monthly receivables across 7 delinquency buckets and computed flow rates as simple ratios between consecutive buckets — this is the standard operational approach for portfolio-level loss forecasting" |
+| Vintage Analysis | Sherwood Lifetime Loss — marginal/cumulative PD curves by mortgage product × MOB | "I built PD curves by product type and MOB for mortgage portfolios, smoothed with 6-month rolling averages, and related them to macro conditions at origination" |
+| Forward Default Flow Rates | Loss Forecasting receivables tracker — Current→30→60→90→120→150→180 DPD for $18B+ in portfolios. Flow rates computed as simple bucket-to-bucket ratios. | "I tracked monthly receivables across 7 delinquency buckets and computed flow rates as simple ratios between consecutive buckets. For LendingClub, I reconstructed monthly status from terminal data since monthly tapes aren't available." |
 | Flow Through Rate | Loss forecasting output metric: product of flow rates showing ultimate GCO rate | "I tracked Flow Through Rate as an early warning signal — if it trends up, origination quality or economic conditions are deteriorating" |
-| Dual-Mode Forecasting | PyCraft (operational extend method) vs. CECL regulatory mode | "I used PyCraft for AOP/FRP planning with simple rolling average extensions. For CECL, I built a three-phase approach with macro adjustment, reversion, and historical baseline — these serve different stakeholder needs." |
-| Macro Scenarios | FEG scenarios with Baseline 75%, Upside 5%, Downside 15%, Downside2 5%. Mean reversion for 160 quarters | "I computed weighted macro forecasts across 4 scenarios and extended via mean reversion for the full remaining loan life" |
-| ECL / CECL Framework | ALLL tracker, Pre-FEG/Central/Post-FEG ECL computation | "I maintained the monthly ALLL tracker and understood the three ECL views used for regulatory reporting — Pre-FEG (pure model), Central (base-case macro), Post-FEG (scenario-weighted + qualitative)" |
-| Liquidation Factors | Portfolio-level (operational) vs. differentiated by term/vintage (CECL) | "PyCraft used portfolio-level because it was operational planning. For CECL, I built empirical prepayment curves differentiated by term and vintage — this better reflects LendingClub's actual data." |
-| Forecasting Tool | PyCraft — Django-based tool taking receivables input, applying liquidation factors, projecting 10-year GCO/NCO using flow rates | "I used a proprietary loss forecasting tool for annual financial resource planning across all portfolios" |
-| Portfolio Monitoring | Monthly receivables for HMC Premier ($14B), Credit Cards ($230M), Private Banking ($3B), etc. | "I tracked receivables across 10+ portfolio segments, reporting across reservable, reportable, and operational views" |
-| External Benchmark Validation | Benchmark population approach for PSI and calibration | "This mirrors a benchmark validation approach from my prior role where we validated models against a known June-Aug 2014 benchmark population to ensure out-of-sample generalization" |
+| Dual-Mode Forecasting | PyCraft (operational extend method) vs. CECL regulatory mode | "I used PyCraft for AOP/FRP planning with simple rolling average extensions. For CECL, I built a three-phase approach with macro adjustment, reversion, and historical baseline." |
+| Macro Scenarios | FEG scenarios with Baseline 75%, Upside 5%, Downside 15%, Downside2 5%. Mean reversion. | "I computed weighted macro forecasts across 4 scenarios and extended via mean reversion for the full remaining loan life" |
+| ECL / CECL Framework | ALLL tracker, Pre-FEG/Central/Post-FEG ECL computation | "I maintained the monthly ALLL tracker and understood the three ECL views used for regulatory reporting — Pre-FEG, Central, Post-FEG" |
+| Liquidation Factors | Portfolio-level (operational) vs. differentiated by term/vintage (CECL) | "PyCraft used portfolio-level for simplicity. For CECL, I built empirical prepayment curves differentiated by term and vintage." |
+| Forecasting Tool | PyCraft — Django-based tool taking receivables input, applying liquidation factors, projecting 10-year GCO/NCO | "I used a proprietary loss forecasting tool for annual financial resource planning" |
+| Portfolio Monitoring | Monthly receivables for multiple portfolio segments | "I tracked receivables across 10+ portfolio segments, reporting across reservable, reportable, and operational views" |
+| External Benchmark Validation | Benchmark population approach for PSI and calibration | "I validated models against a known June-Aug 2014 benchmark population to ensure out-of-sample generalization" |
 
 ---
 
 ## Getting Started Checklist
 
-- [ ] Review LendingClub_Complete_Data_Dictionary.md for variable reference (NEW V4)
+- [ ] Review LendingClub_Complete_Data_Dictionary.md for variable reference
 - [ ] Create project directory structure
 - [ ] Initialize git repository
 - [ ] Create virtual environment: `python -m venv venv`
@@ -1029,8 +1124,8 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 - [ ] Save CLAUDE.md at project root
 - [ ] Download wordsforthewise dataset from Kaggle
 - [ ] Place dataset in `data/raw/`
-- [ ] Verify dataset integrity: 2,260,668 usable rows after footer removal (NEW V4)
-- [ ] Confirm benchmark_population_2014.csv is in data/raw/ for validation (NEW V4)
+- [ ] Verify dataset integrity: 2,260,668 usable rows after footer removal
+- [ ] Confirm benchmark_population_2014.csv is in data/raw/ for validation
 - [ ] Set up FRED API key (register at https://fred.stlouisfed.org/)
 - [ ] Configure FRED access in config.py
 - [ ] Begin with Notebook `01_EDA_and_Data_Cleaning.ipynb`
@@ -1060,256 +1155,53 @@ lifelines>=0.28
 
 ---
 
-## V3 Implementation Notes
-
-### Critical Dependencies for Macro Integration
-
-1. **FRED API Access:** Requires `fredapi` library and API key (free from St. Louis Fed)
-2. **Macro Data Alignment:** Issue_d month must align with FRED monthly/quarterly data. For quarterly macro (GDP), carry forward within quarter.
-3. **Train/Test Split Integrity:** Time-based split (2007-2015 train, 2016 validation, 2017-2018 test) ensures models trained on recession/recovery are validated on post-crisis period — this is why macro features are critical.
-4. **PD Model Coefficients:** Negative coefficients on macro features (higher unemployment → higher PD) should be intuitive and stable across train/validation/test.
-
-### Competing Risks Implementation
-
-1. **Prepayment Identification:** Not all "Fully Paid" loans are prepayments. Must compare actual life to contractual term.
-2. **Data Requirements:** issue_d, last_pymnt_d, loan_status, term. Ensure dates are clean.
-3. **Competing Risks Estimator:** Consider using lifelines library for survival analysis with competing risks.
-
-### Dual-Mode Forecasting Architecture
-
-1. **Extend Method:** Simple, no macro adjustment needed
-   - Load 6-month rolling avg flow rates
-   - Extend flat across projection horizon
-   - Fast, operationally practical
-
-2. **CECL Method:** Requires macro scenario application
-   - Phase 1: Adjust each flow rate by scenario factor (1.0 Baseline, 1.10 Mild Downturn, 1.20 Stress)
-   - Phase 2: Linear blend from Phase 1 rates to historical averages
-   - Phase 3: Historical averages only
-   - More complex, but regulatory compliant
-
-### Streamlit UI/UX Priorities
-
-1. **Dual-mode toggle** on ECL page — radio button, instant recalculation
-2. **Assumption sliders** for liquidation, prepayment, discount rate
-3. **Flow Through Rate** as KPI card with trend sparkline
-4. **Pre-FEG/Central/Post-FEG** radio buttons showing scenario impact
-5. **Download buttons** for assumptions Excel and results tables
-
----
-
-## V4 Implementation Notes (NEW)
-
-### Data Profiling and Quality
-
-1. **Footer Row Cleanup:** The accepted_2007_to_2018Q4.csv contains 33 summary rows at the end. Drop these by identifying rows where loan_amnt is null after initial load. This leaves exactly 2,260,668 usable records from the reported 2,260,701.
-
-2. **Column Drop Strategy (Notebook 01) — CORRECTED FROM FULL-FILE PROFILING:**
-
-   **Tier 1: Drop Immediately (>93% missing or non-feature) — 34 columns:**
-   - member_id (100% empty)
-   - 13 sec_app_* + revol_bal_joint (95.22% empty — joint application only)
-   - desc (94.42% empty), url (non-feature), id (non-feature, 89% empty)
-   - pymnt_plan (constant 'n'), policy_code (constant 1)
-   - dti_joint (94.66%), annual_inc_joint (94.66%), verification_status_joint (94.88%)
-   - 15 hardship/settlement columns (>97% empty): hardship_type, hardship_reason,
-     hardship_status, deferral_term, hardship_amount, hardship_start_date,
-     hardship_end_date, payment_plan_start_date, hardship_length, hardship_dpd,
-     hardship_loan_status, hardship_payoff_balance_amount, hardship_last_payment_amount,
-     orig_projected_additional_accrued_interest, debt_settlement_flag_date,
-     settlement_status, settlement_date, settlement_amount, settlement_percentage,
-     settlement_term
-
-   **Tier 2: Drop After EDA Review (70-85% missing) — 3 columns:**
-   - mths_since_last_record (84.11% missing)
-   - mths_since_recent_bc_dlq (77.01% missing)
-   - mths_since_last_major_derog (74.31% missing)
-   - NOTE: Create binary flags (e.g., has_public_record, has_major_derog) BEFORE dropping
-
-   **Tier 3: KEEP with Missing Flag + Imputation (38-68% missing) — 14 columns:**
-   - mths_since_recent_revol_delinq (67.25%) — create no_revol_delinq flag
-   - next_pymnt_d (59.51%) — informational only, not a PD feature
-   - mths_since_last_delinq (51.25%) — create no_delinq_history flag
-   - il_util (47.28%) — installment utilization, keep for WOE/IV screening
-   - mths_since_rcnt_il (40.25%) — months since recent installment, keep
-   - open_acc_6m, open_act_il, open_il_12m, open_il_24m, total_bal_il,
-     open_rv_12m, open_rv_24m, max_bal_bc, all_util, inq_fi, total_cu_tl,
-     inq_last_12m (all ~38.31% missing) — installment/credit union features,
-     keep ALL for WOE/IV screening with missing flag + median imputation
-   - IMPORTANT: These were incorrectly listed as ">70% missing" in V4 based on
-     100K sample. Full-file scan confirms they're only 38% missing (1.39M of 2.26M
-     records populated). Dropping them loses usable signal.
-
-   **Tier 4: Let WOE/IV Decide (1-38% missing) — all remaining:**
-   - All Tier 3 and Tier 4 columns go through WOE/IV analysis in Notebook 02
-   - Drop if IV < 0.02 (no predictive power)
-   - Keep if IV > 0.02
-
-3. **Data Type Parsing (Notebook 01):**
-   - `term`: Use `.str.strip()` before extracting numeric value
-   - `emp_length`: Build mapping from text values ('10+ years' → 10, '< 1 year' → 0, '2 years' → 2, etc.)
-   - `issue_d`, `earliest_cr_line`, `last_pymnt_d`: Use `pd.to_datetime(col, format='%b-%Y')`
-   - `int_rate`, `revol_util`: Already float64 — no % stripping required (confirmed from profiling)
-
-4. **Missingness Strategy (Corrected from Full-File Scan):**
-   - mths_since_last_delinq: 51.25% missing — create no_delinq_history flag, fill with median
-   - mths_since_recent_revol_delinq: 67.25% — create no_revol_delinq flag, fill with median
-   - Installment-specific features (open_act_il, open_il_12m, etc.): 38.31% missing
-     (CORRECTED from earlier estimate of 78-81%; the 100K sample had disproportionate
-     missingness in early records). Keep ALL with missing flags + median imputation.
-   - mths_since_recent_inq: 13.07% missing — impute with median
-   - emp_length: 5.64% missing — create emp_length_unknown flag, fill with median
-   - Binary flag pattern: for any feature with >10% missing, always create a
-     has_[feature] or no_[feature] binary flag BEFORE imputing, since missingness
-     itself is often predictive in credit data
-
-5. **Comprehensive Profiling Checklist (for Claude Code in Notebook 01):**
-
-   This checklist ensures Claude Code performs thorough data validation beyond basic EDA.
-   Results should be saved to `data/results/full_profiling_report.json` and key findings
-   documented in Notebook 01 markdown cells.
-
-   **A. Outlier Detection (all numeric columns):**
-   - Compute IQR (Q1, Q3, IQR = Q3-Q1) for every numeric column
-   - Flag values outside [Q1 - 3×IQR, Q3 + 3×IQR] as extreme outliers
-   - Compute Z-scores; flag |Z| > 5 as extreme
-   - PRIORITY columns with known outlier issues:
-     * annual_inc: cap at 99th percentile (max = $110M is clearly erroneous)
-     * dti: remove or cap values < 0 or > 100 (range is [-1, 999])
-     * revol_util: investigate values > 150% (max = 892.3); decide cap threshold
-     * revol_bal: investigate values > $500K (max = $2.9M)
-     * tot_coll_amt, tot_cur_bal: cap at 99.5th percentile (max ~$9-10M)
-     * bc_util, il_util, all_util: investigate values > 100%
-     * last_fico_range_low/high: set values = 0 to NaN (invalid FICO)
-     * settlement_percentage: investigate values > 100% (max = 521)
-   - Document outlier treatment decisions (cap, winsorize, remove, or flag) in markdown
-   - Save outlier summary: {column: {n_outliers, pct_outliers, min, max, p1, p99, treatment}}
-
-   **B. Distribution Analysis (all numeric columns):**
-   - Compute skewness and kurtosis for every numeric column
-   - Classify: Normal (|skew|<0.5), Moderate Skew (0.5-1), High Skew (>1)
-   - For highly skewed features (|skew|>1): note if log-transform might be needed
-   - Generate histogram (20 bins) for top 30 features by IV (after WOE/IV in Notebook 02)
-   - Plot KDE overlays for default=0 vs default=1 for key features
-   - Assess if any features need transformation before logistic regression
-   - Save distribution summary: {column: {mean, median, std, skew, kurtosis, shape_class}}
-
-   **C. Correlation Analysis:**
-   - Compute Pearson correlation matrix for ALL numeric features (after dropping Tier 1)
-   - Flag all pairs with |correlation| > 0.80 (high multicollinearity risk)
-   - Known expected high correlations to verify:
-     * loan_amnt ↔ funded_amnt ↔ funded_amnt_inv ↔ installment (near-perfect)
-     * fico_range_low ↔ fico_range_high (near-perfect, 4-point offset)
-     * last_fico_range_low ↔ last_fico_range_high (near-perfect)
-     * total_pymnt ↔ total_pymnt_inv (near-perfect)
-     * out_prncp ↔ out_prncp_inv (near-perfect)
-     * open_acc ↔ num_sats (likely >0.9)
-     * tot_cur_bal ↔ tot_hi_cred_lim (likely >0.7)
-   - For each highly correlated pair: recommend which to keep (domain knowledge)
-   - Generate correlation heatmap (top 30 features, annotated)
-   - Compute VIF (Variance Inflation Factor) for final feature set going to logistic regression
-   - Save correlation findings: {pair: correlation, recommendation}
-
-   **D. Full-File Validation (sanity checks):**
-   - Confirm total rows = 2,260,668 after footer removal
-   - Confirm terminal loan count: Fully Paid + Charged Off + Default ≈ 1,345,350
-   - Confirm default rate ≈ 19.96%
-   - Confirm grade monotonicity: default_rate(A) < B < C < D < E < F < G
-   - Confirm term values are exactly {36, 60} after parsing
-   - Confirm emp_length values are in {0, 1, 2, ..., 10, NaN} after parsing
-   - Confirm int_rate range: [5.31, 30.99] with mean ≈ 13.09
-   - Confirm fico_range_low range: [610, 845] with mean ≈ 698.59
-   - Confirm loan_amnt range: [500, 40000] with mean ≈ $15,047
-   - Verify no duplicate loan records (check on id or loan_amnt + issue_d + int_rate combination)
-   - Cross-check: total_pymnt = total_rec_prncp + total_rec_int + total_rec_late_fee + recoveries (approximately)
-   - Document any anomalies found
-
-   **E. Deep Categorical Value Counts:**
-   - For all categorical features with <50 unique values: full value_counts with percentages
-   - For high-cardinality categoricals (emp_title, title, zip_code, addr_state): top 20 + unique count
-   - Verify loan_status distribution matches expected: 9 values
-   - Verify home_ownership: expected {RENT, MORTGAGE, OWN, OTHER, NONE, ANY}
-   - Verify purpose: expected 14 categories (debt_consolidation dominant at ~47%)
-   - Verify application_type: expected {Individual, Joint App}; ~95% Individual
-   - Document any unexpected values (e.g., 'NONE' in home_ownership)
-   - Save value counts: {column: {value: count, ...}}
-
-### External Data Integration
-
-1. **benchmark_population_2014.csv:**
-   - 200,000 records from JUN-AUG 2014
-   - Contains: FICO, delinquency bucket, PERFORMANCE_OUTCOME
-   - Use in Notebook 08 for external validation
-   - Compute PSI against training population
-   - Backtest predicted PD against actual outcomes
-
-2. **rejected_2007_to_2018Q4.csv:**
-   - 27.6M records (9 columns only)
-   - Used for selection bias discussion in Notebook 01
-   - NOT used for modeling
-   - Interview talking point: acknowledge survivorship bias but frame as intentional focus on portfolio management
-
-### LGD Enhancement
-
-1. **Two formulas for documentation:**
-   - **Primary (NEW V4):** LGD = 1 - ((recoveries - collection_recovery_fee) / EAD) — more accurate
-   - **Cross-check:** LGD = 1 - (total_rec_prncp / EAD) — for validation
-
-2. **Why the upgrade:** Collection fee was previously included in recoveries numerator. Subtracting it gives net recovery to lender.
-
-### Interview Framing for V4 Enhancements
-
-1. **Data diligence:** "I profiled the full 2.26M loan dataset and documented data quirks — footer rows, leading spaces in term, text parsing for emp_length — this kind of diligence separates polished projects from student work."
-
-2. **Feature engineering:** "I identified ~30 credit bureau variables for WOE/IV screening, categorized them (account activity, balance/limit, utilization, time-based, delinquency), and acknowledged that optbinning would handle complex interactions."
-
-3. **External validation:** "The benchmark_population_2014.csv allowed me to validate my model on a separate cohort from a specific time period, mimicking the external validation approach I used at my prior institution."
-
-4. **LGD accuracy:** "By separating recoveries from collection fees, I improved LGD formula accuracy. The portfolio-level LGD of ~83% matched the 10-K, validating my approach."
-
----
-
-## V5 Enhancements (NEW February 2026)
-
-### Changes Applied:
-1. **Removed all HSBC-specific references** — replaced with generic framing emphasizing prior role experience
-2. **Added contextual note on New Originations visibility** in Liquidation Factor Design section (Operational vs. CECL modes)
-3. **Added clarifying note on FEG/stress orthogonality** in Three ECL Views and Stress sections
-4. **Added recovery rate connection to LGD model** in ECL & Forecasting section
-5. **Full-file profiling corrections** — Column drop strategy restructured into 4 tiers based on confirmed missingness from all 2,260,701 rows. 6 columns previously marked for immediate drop (38% missing) moved to "keep with imputation" tier. Outlier flags added for 14 numeric columns. Comprehensive profiling checklist embedded for Claude Code.
-
-### Key Updates:
-- All "HSBC" references converted to "my prior institution," "prior role," or removed entirely where appropriate
-- Tool/framework names (PyCraft, Sherwood, FEG, OCC, Fed) preserved as-is
-- New Originations input visibility now context-dependent: shown in Operational mode, hidden in CECL mode
-- FEG views now explicitly documented as independent of forecasting mode
-- Stress scenarios clarified for both Operational and CECL modes
-- Recovery rate in DCL-ECL now linked to LGD model output for consistency
-
----
-
 ## Interview Talking Points Summary
 
-1. **"Why macro features?"** — "Time-based split across economic regimes requires macroeconomic context. Without it, the model would overpredict defaults in boom periods because it learned recession rates as structural truths."
+1. **"Why grade in the scorecard?"** — "This is a behavioral scorecard for portfolio monitoring — the loans are already on LendingClub's books. Grade is a known, observed attribute assigned at origination, making it the single strongest predictor. If this were an origination scorecard (deciding whether to approve a new applicant), we'd exclude grade because we'd be building the tool that assigns it."
 
-2. **"Why prepayment model?"** — "LendingClub has significant prepayment; ignoring it overstates ECL. I built a competing risks framework to separately estimate default vs. prepay hazards."
+2. **"Why macro features in ML but not scorecard?"** — "In a logistic regression with our time-based split (2007-2015 train, 2017-2018 test), macro features confound with LendingClub's growth trajectory. UNRATE falls 2010→2015 while LC scales dramatically, causing the model to learn an inverted relationship. Tree-based models (XGBoost, LightGBM) handle non-linear interactions correctly, so macro features belong there and in stress testing."
 
-3. **"Scorecard vs. ML models?"** — "Scorecard is the policy tool — interpretable, monotonic, regulatory-friendly. ML models have better AUC and enable scenario analysis. Both serve different stakeholder needs."
+3. **"Why not use Freddie Mac data?"** — "I chose LendingClub because the role is at LendingClub and personal loan credit risk is directly relevant. The trade-off is that the public dataset lacks monthly payment history, which I worked around with synthetic reconstruction. This analytical exercise actually demonstrates deeper understanding than simply loading a pre-made file."
 
-4. **"Flow Through Rate?"** — "It's the product of all flow rates, showing the ultimate charge-off rate. I track it as an early warning signal — if it trends up, something's wrong with origination or the economy."
+4. **"Why synthetic monthly panel?"** — "The public LendingClub dataset provides loan-level terminal outcomes, not monthly payment tapes. I reconstructed approximate monthly DPD status using the amortization schedule and charge-off timing. This captures the forward default cascade — Current through Charge-off — reliably, but cannot observe curing events. I scoped the flow rate analysis to forward transitions accordingly."
 
-5. **"Dual-mode forecasting?"** — "Operational mode (extend) is what PyCraft does for planning — simple, rolling averages. CECL mode is three-phase with macro adjustment, reversion, and historical baseline. They serve different regulatory vs. operational needs."
+5. **"Why prepayment model?"** — "LendingClub has significant prepayment; ignoring it overstates ECL. I built a competing risks framework to separately estimate default vs. prepay hazards from terminal data."
 
-6. **"Why stress at flow rate level?"** — "The waterfall is multiplicative. A 15% stress on each flow rate produces ~75% cumulative effect (because 1.15^7 ≈ 2.66), which correctly reflects how delinquency accelerates under stress."
+6. **"Scorecard vs. ML models?"** — "Scorecard is the policy tool — interpretable, monotonic, regulatory-friendly, 10-15 features. ML models have better AUC and enable scenario analysis. Both serve different stakeholder needs."
 
-7. **"Liquidation factors?"** — "Operational mode uses portfolio-level for simplicity. CECL mode uses empirical curves by term and vintage from LendingClub data — this better captures real prepayment dynamics."
+7. **"Flow Through Rate?"** — "It's the product of all flow rates, showing the ultimate charge-off rate. I track it as an early warning signal — if it trends up, something's wrong with origination or the economy."
 
-8. **"Prior institution connection?"** — "I built this exact framework at my prior institution — FEG scenarios, loss forecasting receivables tracker, vintage analysis with macro context. LendingClub's approach is conceptually the same but with a smaller portfolio and richer individual loan data."
+8. **"Dual-mode forecasting?"** — "Operational mode (extend) is what PyCraft does for planning — simple, rolling averages extended flat. CECL mode is three-phase with macro adjustment, reversion, and historical baseline. They serve different regulatory vs. operational needs."
 
-9. **"Data profiling?"** — "I documented all data quirks — footer rows, text parsing, missingness patterns, empty columns. This kind of diligence ensures robust pipelines and catches production issues early."
+9. **"Why stress at flow rate level?"** — "The waterfall is multiplicative. A 15% stress on each flow rate produces ~75% cumulative effect (because 1.15^7 ≈ 2.66), which correctly reflects how delinquency accelerates under stress."
 
-10. **"External validation?"** — "I used the benchmark_population_2014.csv to validate model generalization on a separate cohort, computing PSI and backtesting predicted PDs against actual outcomes. This mimics how we validated models at my prior institution."
+10. **"How accurate are the flow rates?"** — "The PD, LGD, and EAD models use real observed data. The flow-rate-based ECL uses synthetically reconstructed monthly status, making dollar amounts approximate. The framework is identical to production implementation — only input granularity differs."
 
 ---
 
-End of V5 Roadmap
+## V6 Enhancements (Data Gap Assessment + V5.1 Amendments)
+
+### V5.1 PD Scorecard Amendments:
+1. Grade included in WOE binning and PD scorecard (portfolio monitoring context)
+2. int_rate and sub_grade excluded from scorecard (collinearity with grade)
+3. Macro features excluded from logistic regression (confounding with LC growth trajectory — UNRATE sign inverts)
+4. Disciplined feature selection: IV ≥ 0.05, |corr| < 0.70, 10-15 features
+5. All WOE coefficients must be negative; remove and refit if positive
+6. Updated targets: AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
+7. Updated RAG: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
+
+### Data Gap Assessment Fixes:
+1. Session 5.5: Replaced month-level logistic regression with survival/CPR approach
+2. Session 6: Added synthetic monthly panel construction for flow rate computation
+3. Session 6: Renamed flow rate analysis to "Forward Default Flow Rate Analysis"
+4. Session 6: Added explicit data limitation documentation
+5. Sessions 7-8: Added notes about synthetic flow rate base
+6. Sessions 9-10: Added Streamlit data limitation disclaimers
+7. Session 11: Added Data Limitations section to README
+
+### Key Principle:
+The LendingClub public dataset (accepted_2007_to_2018Q4.csv) provides one row per loan with origination features and terminal outcomes. There is NO monthly payment history (the PMTHIST file is no longer publicly available). Sessions 0-5 (PD, ML, EAD, LGD) use real observed data. Sessions 5.5-10 use a mix of real data and synthetically reconstructed monthly status. All limitations are documented honestly.
+
+---
+
+End of V6 Roadmap

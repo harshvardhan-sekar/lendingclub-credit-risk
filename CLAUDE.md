@@ -95,6 +95,8 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 
 ### Feature Engineering
 - WOE-IV approach for scorecard (Notebook 02)
+  - grade IS included as a WOE candidate feature (assigned at origination, legitimate for portfolio monitoring)
+  - int_rate and sub_grade are EXCLUDED (int_rate is mechanically determined by grade; sub_grade is a finer version creating collinearity)
 - Macro features from FRED API merged by origination month (Notebook 01):
   - UNRATE (unemployment rate)
   - CSUSHPINSA (Case-Shiller HPI, home prices)
@@ -102,28 +104,39 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - CPIAUCSL (Consumer Price Index)
   - DFF (Federal Funds Rate)
   - UMCSENT (University of Michigan Consumer Sentiment)
-- These macro features are CRITICAL for time-based split validation.
-  Without them, model overfits to economic regime of train period.
+- Macro features are merged in Session 1 and present in all parquets.
+  They are used in ML models (Session 4), stress testing (Session 8),
+  and ECL computation (Session 6) — but NOT in the logistic regression
+  scorecard (Session 3) where linear confounding with LC's growth
+  trajectory inverts their signs.
 - Macro features included in all parquet files: train.parquet, val.parquet, test.parquet
 
 ### PD Models
-- Logistic regression scorecard (Notebook 03):
-  - Features: WOE-transformed borrower characteristics (NO grade/int_rate)
-  - Include macro features (unemployment, GDP, HPI at minimum)
+- Logistic regression scorecard (Notebook 03 — PD Scorecard with Grade):
+  - Features: WOE-transformed borrower characteristics INCLUDING grade
+  - EXCLUDE int_rate and sub_grade (redundant with grade, near-perfect collinearity)
+  - EXCLUDE all 6 macro features (confound with LC's growth trajectory in linear model)
+  - Feature selection: IV ≥ 0.05, pairwise |correlation| < 0.70, target 10-15 final features
+  - All WOE coefficients MUST be negative; remove and refit if any are positive
+  - Binary flags: include only those with IV ≥ 0.02
   - L2 regularization (Ridge), hyperparameter tuned via 5-fold stratified CV
   - Output: probability of default + scorecard points
-  - Target: AUC ≥ 0.75, Gini ≥ 55%
-- ML models (Notebook 04):
+  - Target: AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
+  - RAG: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
+- ML models (Notebook 04 — Performance Ceiling):
   - XGBoost and LightGBM with Optuna tuning
-  - Include macro features alongside borrower features
+  - Include ALL features: grade + int_rate + sub_grade + macro features + borrower features
+  - This is where macro features, int_rate, and sub_grade belong — tree models handle non-linear interactions
   - SHAP analysis shows macro + borrower feature importance
-  - Target: AUC ≥ 0.80
+  - Target: AUC ≥ 0.80, Gini ≥ 60%
 
 ### Basel Framework Integration
-- PD models MUST include macro features to cover full economic cycle
+- ML PD models (Notebook 04) include macro features to cover full economic cycle
 - This is Basel requirement: models must be validated across regimes
-- Macro features (FRED merge) provide cycle information
-- Flow rates computed monthly to capture delinquency migration patterns
+- Macro features (FRED merge) provide cycle information for ML models and stress testing
+- Logistic regression scorecard (Notebook 03) does NOT include macro features
+  (they confound with LC's origination volume growth in a linear model)
+- Flow rates computed monthly from synthetic panel to capture delinquency migration patterns
 
 ### LGD Model Structure
 - Two-stage approach:
@@ -146,10 +159,13 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Target MAPE < 15%
 - Note: EAD ≈ 1 for fully-drawn term loans (simplifying assumption)
 
-### Prepayment Model (NEW)
+### Prepayment Model (V6 REVISED)
 - Competing risk alongside default
-- Identify prepaid loans: "Fully Paid" status where actual_life << contractual_term
-- Model: conditional prepayment rate by month, loan characteristics, vintage, macro
+- Identify prepaid loans: "Fully Paid" status where actual_life < 0.8 × contractual_term
+- Model: survival analysis / empirical CPR lookup table (NOT month-level logistic regression)
+  - No monthly payment data available; use loan-level time-to-event
+  - Kaplan-Meier survival curves by segment (term × grade × vintage)
+  - Empirical CPR lookup table — standard industry approach
 - Output: empirical prepayment rates by term (36 vs 60), vintage, grade
 - Used in DCF-ECL (Notebook 07) and Streamlit forecasting
 - Prepayment rates feed liquidation curves for operational and CECL forecasts
@@ -165,16 +181,34 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - Incorporate prepayment rates from Notebook 5.5
   - ECL = Contractual CF (NPV) - Expected CF (NPV)
 
-### Flow Rates and Receivables Tracking
+### Data Limitations (V6 NEW)
+- The LendingClub public dataset (accepted_2007_to_2018Q4.csv) provides one row per loan
+  with origination features and terminal outcomes. NO monthly payment history available.
+  The PMTHIST file is no longer publicly available.
+- Sessions 0-5 (PD, ML, EAD, LGD): Use real observed data. Fully reliable.
+- Session 5.5 (Prepayment): Uses loan-level survival analysis. Real data.
+- Sessions 6-10 (Flow Rates, ECL, Stress Testing, Streamlit): Use synthetically
+  reconstructed monthly DPD status from terminal outcomes.
+- Synthetic panel construction: Back-calculate monthly DPD from issue_d, last_pymnt_d,
+  loan_status, and amortization schedule. ~50-60M rows.
+- Curing is UNOBSERVABLE. Flow rates are FORWARD-ONLY (Current → 30+ → ... → GCO).
+- Dollar balances for delinquent months are approximate (scheduled, not actual).
+- The framework is identical to production implementation; only input granularity differs.
+
+### Forward Default Flow Rates and Receivables Tracking (V6 RENAMED)
 - Use institutional format: Receivables Tracker with dollar balances by DPD bucket
 - Flow rates = simple bucket ratios (NOT account-level transition matrices)
+- Flow rates are FORWARD-ONLY: Current → 30+ → 60+ → ... → GCO
+  - No curing rates or two-way transition matrices (curing is unobservable)
 - Example: 30+ Flow Rate = 30 DPD(t) / Current(t-1)
 - Segment by grade and vintage
 - Track trends and identify acceleration patterns
-- **Flow Through Rate (NEW)**: Diagonal multiplication of all intermediate rates
+- **Flow Through Rate**: Diagonal multiplication of all intermediate rates
   - FTR = (Current→30+) × (30+→60+) × ... × (150+→180+) × (180+→GCO)
   - Tracks cumulative delinquency progression
   - Cross-check against PD model
+- NOTE: "In production with monthly payment tapes, curing rates and two-way
+  transitions would be observable, enabling more precise flow rate estimation."
 
 ### ECL Views and Adjustment Methods
 - **Pre-FEG**: pure model output, no adjustments
@@ -223,9 +257,10 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Discrimination: AUC, Gini, KS, CAP curve, bootstrap CI
 - Calibration: Hosmer-Lemeshow, decile calibration, Brier score
 - Stability: PSI, CSI, VDI for each test period
-- RAG status: Green (Gini ≥60%), Amber (50-60%), Red (<50%)
+- RAG status: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
 - Out-of-time performance by vintage year (2016, 2017, 2018)
-- Backtesting: predicted ECL vs realized losses
+- Backtesting: predicted cumulative default rate vs actual cumulative default rate by vintage
+  (NOTE: PD model metrics use real data; flow-rate ECL metrics use synthetic panel)
 - External validation: PSI against benchmark_population_2014.csv
 
 ### External Benchmark Validation (V4 NEW)
@@ -248,7 +283,7 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Use consistent random_state=42 everywhere
 
 ### Prior Role Connection
-- PD scorecard: behavioral scorecard monitoring + RAG framework
+- PD scorecard with grade: portfolio monitoring scorecard + RAG framework
 - WOE/IV binning: mirrors VantageScore/FICO binning, utilization, DTI analysis
 - Receivables tracking: institutional receivables tracker format with dollar balances
 - Flow rate analysis: operational KPI (replaces account-level roll rates)
