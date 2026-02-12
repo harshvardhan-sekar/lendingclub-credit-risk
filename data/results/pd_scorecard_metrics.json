@@ -1,0 +1,44 @@
+{
+  "train": {
+    "AUC": 0.716908111434604,
+    "Gini": 0.43381622286920796,
+    "KS": 0.31552396653491255,
+    "Brier": 0.1359338877985843
+  },
+  "validation": {
+    "AUC": 0.7074916959252217,
+    "Gini": 0.4149833918504433,
+    "KS": 0.29897943613131733,
+    "Brier": 0.164235771679277
+  },
+  "test": {
+    "AUC": 0.6930794060444279,
+    "Gini": 0.3861588120888557,
+    "KS": 0.2801364119537994,
+    "Brier": 0.1563039836828909
+  },
+  "rag_status": "RED",
+  "test_gini_pct": 38.62,
+  "train_test_auc_gap": 0.0238,
+  "optimal_cutoff": 600,
+  "n_features": 13,
+  "features": [
+    "grade",
+    "term",
+    "loan_to_income",
+    "fico_range_low",
+    "acc_open_past_24mths",
+    "dti",
+    "bc_open_to_buy",
+    "verification_status",
+    "avg_cur_bal",
+    "mo_sin_rcnt_tl",
+    "annual_inc",
+    "mths_since_recent_inq",
+    "num_actv_rev_tl"
+  ],
+  "best_C": 0.1,
+  "base_score": 600,
+  "pdo": 20,
+  "base_odds": 4.427342683054942
+}

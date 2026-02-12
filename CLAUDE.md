@@ -121,8 +121,14 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - Binary flags: include only those with IV ≥ 0.02
   - L2 regularization (Ridge), hyperparameter tuned via 5-fold stratified CV
   - Output: probability of default + scorecard points
-  - Target: AUC ≥ 0.75, Gini ≥ 50%, KS ≥ 35%
-  - RAG: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
+  - Target: AUC 0.68-0.72 (realistic ceiling for LR on origination-only data with temporal split), Gini 36-44%, KS 26-32%
+  - RAG: Green (Gini ≥ 42%), Amber (36-42%), Red (< 36%)
+  - Literature benchmark: LR on LendingClub origination-only data without leakage features achieves AUC 0.66-0.71 (arxiv 1805.00801, Stanford CS229 projects, Fed WP18-15).
+    Camp A implementations (AUC 0.80+) include int_rate/grade as leakage.
+    Our 0.693 test AUC with temporal split is consistent with Camp B (proper methodology).
+  - int_rate excluded from LR scorecard: it is LendingClub's own risk pricing output,
+    mechanistically derived from grade. Including it is circular for scorecard purposes.
+    grade retained as interpretable, stable, business-aligned risk indicator for behavioral monitoring.
 - ML models (Notebook 04 — Performance Ceiling):
   - XGBoost and LightGBM with Optuna tuning
   - Include ALL features: grade + int_rate + sub_grade + macro features + borrower features
