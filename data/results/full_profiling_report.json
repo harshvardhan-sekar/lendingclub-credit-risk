@@ -1,0 +1,1192 @@
+{
+  "outliers": {
+    "loan_amnt": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 1500.0,
+      "p99": 35000.0
+    },
+    "funded_amnt": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 1500.0,
+      "p99": 35000.0
+    },
+    "funded_amnt_inv": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 1500.0,
+      "p99": 35000.0
+    },
+    "int_rate": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 5.32,
+      "p99": 26.3
+    },
+    "installment": {
+      "n_outliers": 25,
+      "pct": 0.0,
+      "p1": 52.85,
+      "p99": 1221.5
+    },
+    "emp_length": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 10.0
+    },
+    "annual_inc": {
+      "n_outliers": 22027,
+      "pct": 0.0164,
+      "p1": 18000.0,
+      "p99": 250000.0
+    },
+    "dti": {
+      "n_outliers": 1129,
+      "pct": 0.0008,
+      "p1": 1.78,
+      "p99": 38.37
+    },
+    "fico_range_low": {
+      "n_outliers": 841,
+      "pct": 0.0006,
+      "p1": 660.0,
+      "p99": 800.0
+    },
+    "fico_range_high": {
+      "n_outliers": 841,
+      "pct": 0.0006,
+      "p1": 664.0,
+      "p99": 804.0
+    },
+    "inq_last_6mths": {
+      "n_outliers": 5899,
+      "pct": 0.0044,
+      "p1": 0.0,
+      "p99": 4.0
+    },
+    "open_acc": {
+      "n_outliers": 6454,
+      "pct": 0.0048,
+      "p1": 3.0,
+      "p99": 29.0
+    },
+    "revol_bal": {
+      "n_outliers": 30765,
+      "pct": 0.0229,
+      "p1": 171.0,
+      "p99": 94553.51
+    },
+    "revol_util": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 1.1,
+      "p99": 98.2
+    },
+    "total_acc": {
+      "n_outliers": 1299,
+      "pct": 0.001,
+      "p1": 5.0,
+      "p99": 61.0
+    },
+    "total_pymnt": {
+      "n_outliers": 24,
+      "pct": 0.0,
+      "p1": 1042.74,
+      "p99": 44431.5
+    },
+    "total_pymnt_inv": {
+      "n_outliers": 23,
+      "pct": 0.0,
+      "p1": 1027.44,
+      "p99": 44394.93
+    },
+    "total_rec_prncp": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 395.92,
+      "p99": 35000.0
+    },
+    "total_rec_int": {
+      "n_outliers": 33197,
+      "pct": 0.0247,
+      "p1": 22.67,
+      "p99": 12819.4
+    },
+    "last_pymnt_amnt": {
+      "n_outliers": 11283,
+      "pct": 0.0084,
+      "p1": 2.23,
+      "p99": 30849.81
+    },
+    "last_fico_range_high": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 499.0,
+      "p99": 819.0
+    },
+    "last_fico_range_low": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 505.0,
+      "p99": 815.0
+    },
+    "tot_cur_bal": {
+      "n_outliers": 9961,
+      "pct": 0.0074,
+      "p1": 3199.0,
+      "p99": 665477.06
+    },
+    "total_rev_hi_lim": {
+      "n_outliers": 30311,
+      "pct": 0.0225,
+      "p1": 2900.0,
+      "p99": 154200.0
+    },
+    "acc_open_past_24mths": {
+      "n_outliers": 3708,
+      "pct": 0.0028,
+      "p1": 0.0,
+      "p99": 15.0
+    },
+    "avg_cur_bal": {
+      "n_outliers": 22244,
+      "pct": 0.0165,
+      "p1": 476.0,
+      "p99": 72425.02
+    },
+    "bc_open_to_buy": {
+      "n_outliers": 54077,
+      "pct": 0.0402,
+      "p1": 0.0,
+      "p99": 73144.51
+    },
+    "bc_util": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 100.8
+    },
+    "mo_sin_old_il_acct": {
+      "n_outliers": 7079,
+      "pct": 0.0053,
+      "p1": 12.0,
+      "p99": 270.0
+    },
+    "mo_sin_old_rev_tl_op": {
+      "n_outliers": 3872,
+      "pct": 0.0029,
+      "p1": 30.0,
+      "p99": 470.0
+    },
+    "mo_sin_rcnt_rev_tl_op": {
+      "n_outliers": 51276,
+      "pct": 0.0381,
+      "p1": 0.0,
+      "p99": 83.0
+    },
+    "mo_sin_rcnt_tl": {
+      "n_outliers": 27299,
+      "pct": 0.0203,
+      "p1": 0.0,
+      "p99": 42.0
+    },
+    "mort_acc": {
+      "n_outliers": 1088,
+      "pct": 0.0008,
+      "p1": 0.0,
+      "p99": 8.0
+    },
+    "mths_since_recent_bc": {
+      "n_outliers": 56792,
+      "pct": 0.0422,
+      "p1": 1.0,
+      "p99": 142.0
+    },
+    "mths_since_recent_inq": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 23.0
+    },
+    "num_actv_bc_tl": {
+      "n_outliers": 2337,
+      "pct": 0.0017,
+      "p1": 0.0,
+      "p99": 11.0
+    },
+    "num_actv_rev_tl": {
+      "n_outliers": 5043,
+      "pct": 0.0037,
+      "p1": 1.0,
+      "p99": 16.0
+    },
+    "num_bc_sats": {
+      "n_outliers": 9654,
+      "pct": 0.0072,
+      "p1": 1.0,
+      "p99": 15.0
+    },
+    "num_bc_tl": {
+      "n_outliers": 7795,
+      "pct": 0.0058,
+      "p1": 1.0,
+      "p99": 23.0
+    },
+    "num_il_tl": {
+      "n_outliers": 17827,
+      "pct": 0.0133,
+      "p1": 0.0,
+      "p99": 35.0
+    },
+    "num_op_rev_tl": {
+      "n_outliers": 7196,
+      "pct": 0.0053,
+      "p1": 2.0,
+      "p99": 23.0
+    },
+    "num_rev_accts": {
+      "n_outliers": 5905,
+      "pct": 0.0044,
+      "p1": 3.0,
+      "p99": 40.0
+    },
+    "num_rev_tl_bal_gt_0": {
+      "n_outliers": 3995,
+      "pct": 0.003,
+      "p1": 1.0,
+      "p99": 16.0
+    },
+    "num_sats": {
+      "n_outliers": 6276,
+      "pct": 0.0047,
+      "p1": 3.0,
+      "p99": 29.0
+    },
+    "num_tl_op_past_12m": {
+      "n_outliers": 5980,
+      "pct": 0.0044,
+      "p1": 0.0,
+      "p99": 8.0
+    },
+    "pct_tl_nvr_dlq": {
+      "n_outliers": 25167,
+      "pct": 0.0187,
+      "p1": 62.5,
+      "p99": 100.0
+    },
+    "percent_bc_gt_75": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 100.0
+    },
+    "tot_hi_cred_lim": {
+      "n_outliers": 9844,
+      "pct": 0.0073,
+      "p1": 8800.0,
+      "p99": 757019.42
+    },
+    "total_bal_ex_mort": {
+      "n_outliers": 28842,
+      "pct": 0.0214,
+      "p1": 2425.0,
+      "p99": 231938.02
+    },
+    "total_bc_limit": {
+      "n_outliers": 26092,
+      "pct": 0.0194,
+      "p1": 0.0,
+      "p99": 102700.0
+    },
+    "total_il_high_credit_limit": {
+      "n_outliers": 22319,
+      "pct": 0.0166,
+      "p1": 0.0,
+      "p99": 201030.51
+    },
+    "has_major_derog": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    },
+    "no_revol_delinq": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    },
+    "no_delinq_history": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    },
+    "il_util_missing": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    },
+    "mths_since_rcnt_il_missing": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    },
+    "installment_features_missing": {
+      "n_outliers": 0,
+      "pct": 0.0,
+      "p1": 0.0,
+      "p99": 1.0
+    }
+  },
+  "distributions": {
+    "loan_amnt": {
+      "mean": 14419.97,
+      "median": 12000.0,
+      "skew": 0.78,
+      "kurtosis": -0.08,
+      "shape": "Moderate Skew"
+    },
+    "funded_amnt": {
+      "mean": 14411.55,
+      "median": 12000.0,
+      "skew": 0.78,
+      "kurtosis": -0.08,
+      "shape": "Moderate Skew"
+    },
+    "funded_amnt_inv": {
+      "mean": 14389.14,
+      "median": 12000.0,
+      "skew": 0.78,
+      "kurtosis": -0.08,
+      "shape": "Moderate Skew"
+    },
+    "term": {
+      "mean": 41.79,
+      "median": 36.0,
+      "skew": 1.21,
+      "kurtosis": -0.54,
+      "shape": "High Skew"
+    },
+    "int_rate": {
+      "mean": 13.24,
+      "median": 12.74,
+      "skew": 0.71,
+      "kurtosis": 0.51,
+      "shape": "Moderate Skew"
+    },
+    "installment": {
+      "mean": 438.08,
+      "median": 375.43,
+      "skew": 1.01,
+      "kurtosis": 0.75,
+      "shape": "High Skew"
+    },
+    "emp_length": {
+      "mean": 5.97,
+      "median": 6.0,
+      "skew": -0.23,
+      "kurtosis": -1.41,
+      "shape": "Normal"
+    },
+    "annual_inc": {
+      "mean": 74571.21,
+      "median": 65000.0,
+      "skew": 1.7,
+      "kurtosis": 3.78,
+      "shape": "High Skew"
+    },
+    "dti": {
+      "mean": 18.18,
+      "median": 17.61,
+      "skew": 0.53,
+      "kurtosis": 1.37,
+      "shape": "Moderate Skew"
+    },
+    "delinq_2yrs": {
+      "mean": 0.32,
+      "median": 0.0,
+      "skew": 5.6,
+      "kurtosis": 58.69,
+      "shape": "High Skew"
+    },
+    "fico_range_low": {
+      "mean": 696.19,
+      "median": 690.0,
+      "skew": 1.29,
+      "kurtosis": 1.66,
+      "shape": "High Skew"
+    },
+    "fico_range_high": {
+      "mean": 700.19,
+      "median": 694.0,
+      "skew": 1.29,
+      "kurtosis": 1.66,
+      "shape": "High Skew"
+    },
+    "inq_last_6mths": {
+      "mean": 0.66,
+      "median": 0.0,
+      "skew": 1.7,
+      "kurtosis": 3.29,
+      "shape": "High Skew"
+    },
+    "mths_since_last_delinq": {
+      "mean": 32.64,
+      "median": 31.0,
+      "skew": 0.95,
+      "kurtosis": 1.8,
+      "shape": "Moderate Skew"
+    },
+    "open_acc": {
+      "mean": 11.59,
+      "median": 11.0,
+      "skew": 1.3,
+      "kurtosis": 3.34,
+      "shape": "High Skew"
+    },
+    "pub_rec": {
+      "mean": 0.22,
+      "median": 0.0,
+      "skew": 11.56,
+      "kurtosis": 743.5,
+      "shape": "High Skew"
+    },
+    "revol_bal": {
+      "mean": 16247.96,
+      "median": 11134.0,
+      "skew": 13.75,
+      "kurtosis": 720.87,
+      "shape": "High Skew"
+    },
+    "revol_util": {
+      "mean": 51.81,
+      "median": 52.2,
+      "skew": -0.07,
+      "kurtosis": -0.8,
+      "shape": "Normal"
+    },
+    "total_acc": {
+      "mean": 24.98,
+      "median": 23.0,
+      "skew": 0.96,
+      "kurtosis": 1.67,
+      "shape": "Moderate Skew"
+    },
+    "out_prncp": {
+      "mean": 0.28,
+      "median": 0.0,
+      "skew": 300.06,
+      "kurtosis": 99381.81,
+      "shape": "High Skew"
+    },
+    "out_prncp_inv": {
+      "mean": 0.28,
+      "median": 0.0,
+      "skew": 300.06,
+      "kurtosis": 99381.81,
+      "shape": "High Skew"
+    },
+    "total_pymnt": {
+      "mean": 14823.67,
+      "median": 12128.02,
+      "skew": 1.04,
+      "kurtosis": 0.68,
+      "shape": "High Skew"
+    },
+    "total_pymnt_inv": {
+      "mean": 14800.01,
+      "median": 12107.17,
+      "skew": 1.04,
+      "kurtosis": 0.68,
+      "shape": "High Skew"
+    },
+    "total_rec_prncp": {
+      "mean": 12181.68,
+      "median": 10000.0,
+      "skew": 0.91,
+      "kurtosis": 0.21,
+      "shape": "Moderate Skew"
+    },
+    "total_rec_int": {
+      "mean": 2398.98,
+      "median": 1569.78,
+      "skew": 2.64,
+      "kurtosis": 10.1,
+      "shape": "High Skew"
+    },
+    "total_rec_late_fee": {
+      "mean": 1.58,
+      "median": 0.0,
+      "skew": 18.9,
+      "kurtosis": 812.11,
+      "shape": "High Skew"
+    },
+    "recoveries": {
+      "mean": 241.43,
+      "median": 0.0,
+      "skew": 8.19,
+      "kurtosis": 118.58,
+      "shape": "High Skew"
+    },
+    "collection_recovery_fee": {
+      "mean": 40.23,
+      "median": 0.0,
+      "skew": 8.74,
+      "kurtosis": 134.45,
+      "shape": "High Skew"
+    },
+    "last_pymnt_amnt": {
+      "mean": 5423.43,
+      "median": 2041.72,
+      "skew": 1.79,
+      "kurtosis": 3.13,
+      "shape": "High Skew"
+    },
+    "last_fico_range_high": {
+      "mean": 677.39,
+      "median": 694.0,
+      "skew": -0.52,
+      "kurtosis": -0.48,
+      "shape": "Moderate Skew"
+    },
+    "last_fico_range_low": {
+      "mean": 678.56,
+      "median": 690.0,
+      "skew": -0.5,
+      "kurtosis": -0.37,
+      "shape": "Moderate Skew"
+    },
+    "collections_12_mths_ex_med": {
+      "mean": 0.02,
+      "median": 0.0,
+      "skew": 14.93,
+      "kurtosis": 694.05,
+      "shape": "High Skew"
+    },
+    "acc_now_delinq": {
+      "mean": 0.01,
+      "median": 0.0,
+      "skew": 21.7,
+      "kurtosis": 1216.37,
+      "shape": "High Skew"
+    },
+    "tot_coll_amt": {
+      "mean": 169.08,
+      "median": 0.0,
+      "skew": 7.62,
+      "kurtosis": 64.59,
+      "shape": "High Skew"
+    },
+    "tot_cur_bal": {
+      "mean": 136651.55,
+      "median": 80231.0,
+      "skew": 1.73,
+      "kurtosis": 3.41,
+      "shape": "High Skew"
+    },
+    "open_acc_6m": {
+      "mean": 1.02,
+      "median": 1.0,
+      "skew": 2.67,
+      "kurtosis": 15.71,
+      "shape": "High Skew"
+    },
+    "open_act_il": {
+      "mean": 2.32,
+      "median": 2.0,
+      "skew": 5.19,
+      "kurtosis": 40.84,
+      "shape": "High Skew"
+    },
+    "open_il_12m": {
+      "mean": 0.91,
+      "median": 1.0,
+      "skew": 2.05,
+      "kurtosis": 16.68,
+      "shape": "High Skew"
+    },
+    "open_il_24m": {
+      "mean": 1.3,
+      "median": 1.0,
+      "skew": 3.48,
+      "kurtosis": 23.14,
+      "shape": "High Skew"
+    },
+    "mths_since_rcnt_il": {
+      "mean": 14.95,
+      "median": 12.0,
+      "skew": 6.01,
+      "kurtosis": 51.54,
+      "shape": "High Skew"
+    },
+    "total_bal_il": {
+      "mean": 28777.19,
+      "median": 24061.5,
+      "skew": 6.28,
+      "kurtosis": 84.56,
+      "shape": "High Skew"
+    },
+    "il_util": {
+      "mean": 73.76,
+      "median": 75.0,
+      "skew": -1.37,
+      "kurtosis": 8.51,
+      "shape": "High Skew"
+    },
+    "open_rv_12m": {
+      "mean": 1.17,
+      "median": 1.0,
+      "skew": 3.65,
+      "kurtosis": 25.16,
+      "shape": "High Skew"
+    },
+    "open_rv_24m": {
+      "mean": 2.4,
+      "median": 2.0,
+      "skew": 3.64,
+      "kurtosis": 24.67,
+      "shape": "High Skew"
+    },
+    "max_bal_bc": {
+      "mean": 4735.15,
+      "median": 4201.0,
+      "skew": 17.36,
+      "kurtosis": 2282.15,
+      "shape": "High Skew"
+    },
+    "all_util": {
+      "mean": 58.67,
+      "median": 59.0,
+      "skew": -0.44,
+      "kurtosis": 4.38,
+      "shape": "Normal"
+    },
+    "total_rev_hi_lim": {
+      "mean": 31870.98,
+      "median": 24100.0,
+      "skew": 2.64,
+      "kurtosis": 9.8,
+      "shape": "High Skew"
+    },
+    "inq_fi": {
+      "mean": 1.04,
+      "median": 1.0,
+      "skew": 4.34,
+      "kurtosis": 39.16,
+      "shape": "High Skew"
+    },
+    "total_cu_tl": {
+      "mean": 0.64,
+      "median": 0.0,
+      "skew": 5.33,
+      "kurtosis": 45.35,
+      "shape": "High Skew"
+    },
+    "inq_last_12m": {
+      "mean": 2.12,
+      "median": 2.0,
+      "skew": 3.96,
+      "kurtosis": 32.32,
+      "shape": "High Skew"
+    },
+    "acc_open_past_24mths": {
+      "mean": 4.67,
+      "median": 4.0,
+      "skew": 1.41,
+      "kurtosis": 4.61,
+      "shape": "High Skew"
+    },
+    "avg_cur_bal": {
+      "mean": 13183.22,
+      "median": 7407.0,
+      "skew": 4.03,
+      "kurtosis": 49.24,
+      "shape": "High Skew"
+    },
+    "bc_open_to_buy": {
+      "mean": 9936.9,
+      "median": 4700.0,
+      "skew": 3.93,
+      "kurtosis": 27.53,
+      "shape": "High Skew"
+    },
+    "bc_util": {
+      "mean": 60.09,
+      "median": 63.2,
+      "skew": -0.39,
+      "kurtosis": -0.81,
+      "shape": "Normal"
+    },
+    "chargeoff_within_12_mths": {
+      "mean": 0.01,
+      "median": 0.0,
+      "skew": 18.08,
+      "kurtosis": 593.98,
+      "shape": "High Skew"
+    },
+    "delinq_amnt": {
+      "mean": 14.9,
+      "median": 0.0,
+      "skew": 94.6,
+      "kurtosis": 14049.05,
+      "shape": "High Skew"
+    },
+    "mo_sin_old_il_acct": {
+      "mean": 126.05,
+      "median": 129.0,
+      "skew": 0.34,
+      "kurtosis": 2.28,
+      "shape": "Normal"
+    },
+    "mo_sin_old_rev_tl_op": {
+      "mean": 180.6,
+      "median": 164.0,
+      "skew": 1.09,
+      "kurtosis": 1.74,
+      "shape": "High Skew"
+    },
+    "mo_sin_rcnt_rev_tl_op": {
+      "mean": 12.86,
+      "median": 8.0,
+      "skew": 3.62,
+      "kurtosis": 21.46,
+      "shape": "High Skew"
+    },
+    "mo_sin_rcnt_tl": {
+      "mean": 7.71,
+      "median": 5.0,
+      "skew": 4.57,
+      "kurtosis": 41.49,
+      "shape": "High Skew"
+    },
+    "mort_acc": {
+      "mean": 1.65,
+      "median": 1.0,
+      "skew": 1.69,
+      "kurtosis": 5.5,
+      "shape": "High Skew"
+    },
+    "mths_since_recent_bc": {
+      "mean": 23.33,
+      "median": 13.0,
+      "skew": 3.55,
+      "kurtosis": 21.68,
+      "shape": "High Skew"
+    },
+    "mths_since_recent_inq": {
+      "mean": 6.49,
+      "median": 5.0,
+      "skew": 1.13,
+      "kurtosis": 0.71,
+      "shape": "High Skew"
+    },
+    "mths_since_recent_revol_delinq": {
+      "mean": 33.94,
+      "median": 33.0,
+      "skew": 1.19,
+      "kurtosis": 4.39,
+      "shape": "High Skew"
+    },
+    "num_accts_ever_120_pd": {
+      "mean": 0.48,
+      "median": 0.0,
+      "skew": 5.16,
+      "kurtosis": 46.21,
+      "shape": "High Skew"
+    },
+    "num_actv_bc_tl": {
+      "mean": 3.61,
+      "median": 3.0,
+      "skew": 1.47,
+      "kurtosis": 4.4,
+      "shape": "High Skew"
+    },
+    "num_actv_rev_tl": {
+      "mean": 5.61,
+      "median": 5.0,
+      "skew": 1.6,
+      "kurtosis": 5.16,
+      "shape": "High Skew"
+    },
+    "num_bc_sats": {
+      "mean": 4.7,
+      "median": 4.0,
+      "skew": 1.78,
+      "kurtosis": 6.88,
+      "shape": "High Skew"
+    },
+    "num_bc_tl": {
+      "mean": 8.05,
+      "median": 7.0,
+      "skew": 1.41,
+      "kurtosis": 3.7,
+      "shape": "High Skew"
+    },
+    "num_il_tl": {
+      "mean": 8.49,
+      "median": 7.0,
+      "skew": 2.14,
+      "kurtosis": 8.24,
+      "shape": "High Skew"
+    },
+    "num_op_rev_tl": {
+      "mean": 8.21,
+      "median": 7.0,
+      "skew": 1.54,
+      "kurtosis": 4.7,
+      "shape": "High Skew"
+    },
+    "num_rev_accts": {
+      "mean": 14.53,
+      "median": 13.0,
+      "skew": 1.36,
+      "kurtosis": 3.38,
+      "shape": "High Skew"
+    },
+    "num_rev_tl_bal_gt_0": {
+      "mean": 5.56,
+      "median": 5.0,
+      "skew": 1.49,
+      "kurtosis": 4.28,
+      "shape": "High Skew"
+    },
+    "num_sats": {
+      "mean": 11.61,
+      "median": 11.0,
+      "skew": 1.34,
+      "kurtosis": 3.6,
+      "shape": "High Skew"
+    },
+    "num_tl_120dpd_2m": {
+      "mean": 0.0,
+      "median": 0.0,
+      "skew": 47.48,
+      "kurtosis": 3447.47,
+      "shape": "High Skew"
+    },
+    "num_tl_30dpd": {
+      "mean": 0.0,
+      "median": 0.0,
+      "skew": 21.48,
+      "kurtosis": 579.94,
+      "shape": "High Skew"
+    },
+    "num_tl_90g_dpd_24m": {
+      "mean": 0.08,
+      "median": 0.0,
+      "skew": 13.52,
+      "kurtosis": 325.79,
+      "shape": "High Skew"
+    },
+    "num_tl_op_past_12m": {
+      "mean": 2.17,
+      "median": 2.0,
+      "skew": 1.55,
+      "kurtosis": 5.38,
+      "shape": "High Skew"
+    },
+    "pct_tl_nvr_dlq": {
+      "mean": 94.36,
+      "median": 98.0,
+      "skew": -2.3,
+      "kurtosis": 7.02,
+      "shape": "High Skew"
+    },
+    "percent_bc_gt_75": {
+      "mean": 45.05,
+      "median": 42.9,
+      "skew": 0.22,
+      "kurtosis": -1.2,
+      "shape": "Normal"
+    },
+    "pub_rec_bankruptcies": {
+      "mean": 0.13,
+      "median": 0.0,
+      "skew": 3.44,
+      "kurtosis": 20.04,
+      "shape": "High Skew"
+    },
+    "tax_liens": {
+      "mean": 0.05,
+      "median": 0.0,
+      "skew": 32.74,
+      "kurtosis": 3670.33,
+      "shape": "High Skew"
+    },
+    "tot_hi_cred_lim": {
+      "mean": 169625.03,
+      "median": 112373.0,
+      "skew": 1.7,
+      "kurtosis": 3.36,
+      "shape": "High Skew"
+    },
+    "total_bal_ex_mort": {
+      "mean": 49231.47,
+      "median": 37295.0,
+      "skew": 4.48,
+      "kurtosis": 79.73,
+      "shape": "High Skew"
+    },
+    "total_bc_limit": {
+      "mean": 21404.31,
+      "median": 15100.0,
+      "skew": 2.94,
+      "kurtosis": 21.71,
+      "shape": "High Skew"
+    },
+    "total_il_high_credit_limit": {
+      "mean": 41608.59,
+      "median": 31681.0,
+      "skew": 3.24,
+      "kurtosis": 31.17,
+      "shape": "High Skew"
+    },
+    "has_public_record": {
+      "mean": 0.17,
+      "median": 0.0,
+      "skew": 1.76,
+      "kurtosis": 1.09,
+      "shape": "High Skew"
+    },
+    "has_recent_bc_delinq": {
+      "mean": 0.24,
+      "median": 0.0,
+      "skew": 1.24,
+      "kurtosis": -0.47,
+      "shape": "High Skew"
+    },
+    "has_major_derog": {
+      "mean": 0.26,
+      "median": 0.0,
+      "skew": 1.08,
+      "kurtosis": -0.84,
+      "shape": "High Skew"
+    },
+    "no_revol_delinq": {
+      "mean": 0.67,
+      "median": 1.0,
+      "skew": -0.7,
+      "kurtosis": -1.51,
+      "shape": "Moderate Skew"
+    },
+    "no_delinq_history": {
+      "mean": 0.5,
+      "median": 1.0,
+      "skew": -0.02,
+      "kurtosis": -2.0,
+      "shape": "Normal"
+    },
+    "il_util_missing": {
+      "mean": 0.65,
+      "median": 1.0,
+      "skew": -0.65,
+      "kurtosis": -1.58,
+      "shape": "Moderate Skew"
+    },
+    "mths_since_rcnt_il_missing": {
+      "mean": 0.61,
+      "median": 1.0,
+      "skew": -0.46,
+      "kurtosis": -1.79,
+      "shape": "Normal"
+    },
+    "installment_features_missing": {
+      "mean": 0.6,
+      "median": 1.0,
+      "skew": -0.41,
+      "kurtosis": -1.83,
+      "shape": "Normal"
+    },
+    "emp_length_unknown": {
+      "mean": 0.06,
+      "median": 0.0,
+      "skew": 3.77,
+      "kurtosis": 12.2,
+      "shape": "High Skew"
+    },
+    "mths_since_recent_inq_missing": {
+      "mean": 0.13,
+      "median": 0.0,
+      "skew": 2.21,
+      "kurtosis": 2.88,
+      "shape": "High Skew"
+    }
+  },
+  "correlations": {
+    "loan_amnt__funded_amnt": {
+      "corr": 0.9996,
+      "recommendation": "Keep loan_amnt, drop funded_amnt"
+    },
+    "loan_amnt__funded_amnt_inv": {
+      "corr": 0.9986,
+      "recommendation": "Keep loan_amnt, drop funded_amnt_inv"
+    },
+    "fico_range_low__fico_range_high": {
+      "corr": 1.0,
+      "recommendation": "Keep fico_range_low, drop fico_range_high"
+    },
+    "last_fico_range_low__last_fico_range_high": {
+      "corr": 0.9221,
+      "recommendation": "Keep last_fico_range_low"
+    },
+    "out_prncp__out_prncp_inv": {
+      "corr": 1.0,
+      "recommendation": "Keep out_prncp, drop out_prncp_inv"
+    },
+    "total_pymnt__total_pymnt_inv": {
+      "corr": 0.9993,
+      "recommendation": "Keep total_pymnt, drop total_pymnt_inv"
+    }
+  },
+  "sanity_checks": {
+    "terminal_loans": {
+      "expected": "~1,345,350",
+      "actual": 1345350,
+      "status": "PASS"
+    },
+    "default_rate": {
+      "expected": "~19.96%",
+      "actual": "19.9650%",
+      "status": "PASS"
+    },
+    "grade_monotonicity": {
+      "expected": "A < B < C < D < E < F < G",
+      "actual": "True",
+      "status": "PASS"
+    },
+    "term_values": {
+      "expected": "{36, 60}",
+      "actual": "{np.int64(36), np.int64(60)}",
+      "status": "PASS"
+    },
+    "emp_length_range": {
+      "expected": "{0..10}",
+      "actual": "[np.float64(0.0), np.float64(1.0), np.float64(2.0), np.float64(3.0), np.float64(4.0), np.float64(5.0), np.float64(6.0), np.float64(7.0), np.float64(8.0), np.float64(9.0), np.float64(10.0)]",
+      "status": "PASS"
+    },
+    "int_rate": {
+      "expected": "[5.31, 30.99], mean~13.09",
+      "actual": "[5.31, 30.99], mean=13.24",
+      "status": "PASS"
+    },
+    "fico_range_low": {
+      "expected": "[610, 845], mean~698.59",
+      "actual": "[625, 845], mean=696.19",
+      "status": "CHECK"
+    },
+    "loan_amnt": {
+      "expected": "[500, 40000], mean~$15,047",
+      "actual": "[500, 40,000], mean=$14,420",
+      "status": "PASS"
+    },
+    "accounting_check": {
+      "expected": "total_pymnt ~ sum of components",
+      "actual": "100.00% within $1",
+      "status": "PASS"
+    }
+  },
+  "categorical_counts": {
+    "grade": {
+      "B": 392748,
+      "C": 381694,
+      "A": 235095,
+      "D": 200966,
+      "E": 93656,
+      "F": 32059,
+      "G": 9132
+    },
+    "sub_grade": {
+      "C1": 85496,
+      "B4": 83200,
+      "B5": 82541,
+      "B3": 81828,
+      "C2": 79215,
+      "C3": 75000,
+      "C4": 74422,
+      "B2": 74025,
+      "B1": 71154,
+      "C5": 67561,
+      "A5": 64005,
+      "A4": 52236,
+      "D1": 51323,
+      "D2": 44851,
+      "A1": 43679,
+      "D3": 39322,
+      "A3": 37997,
+      "A2": 37178,
+      "D4": 35568,
+      "D5": 29902,
+      "E1": 23749,
+      "E2": 21378,
+      "E3": 18387,
+      "E4": 15723,
+      "E5": 14419,
+      "F1": 9970,
+      "F2": 7198,
+      "F3": 6088,
+      "F4": 4859,
+      "F5": 3944,
+      "G1": 2997,
+      "G2": 2131,
+      "G3": 1614,
+      "G4": 1280,
+      "G5": 1110
+    },
+    "home_ownership": {
+      "MORTGAGE": 665596,
+      "RENT": 534436,
+      "OWN": 144840,
+      "ANY": 286,
+      "OTHER": 144,
+      "NONE": 48
+    },
+    "verification_status": {
+      "Source Verified": 521289,
+      "Verified": 418352,
+      "Not Verified": 405709
+    },
+    "purpose": {
+      "debt_consolidation": 780342,
+      "credit_card": 295285,
+      "home_improvement": 87507,
+      "other": 77877,
+      "major_purchase": 29427,
+      "medical": 15556,
+      "small_business": 15416,
+      "car": 14588,
+      "moving": 9480,
+      "vacation": 9065,
+      "house": 7254,
+      "wedding": 2294,
+      "renewable_energy": 933,
+      "educational": 326
+    },
+    "initial_list_status": {
+      "w": 784041,
+      "f": 561309
+    },
+    "next_pymnt_d": {
+      "Apr-2019": 40
+    },
+    "application_type": {
+      "Individual": 1319544,
+      "Joint App": 25806
+    },
+    "hardship_flag": {
+      "N": 1345350
+    },
+    "disbursement_method": {
+      "Cash": 1338450,
+      "DirectPay": 6900
+    },
+    "debt_settlement_flag": {
+      "N": 1312068,
+      "Y": 33282
+    }
+  }
+}
