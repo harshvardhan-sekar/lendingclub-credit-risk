@@ -201,7 +201,10 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - SHAP analysis shows macro + borrower feature importance
   - This is where macro features belong — tree models handle non-linear
     interactions with LC's growth trajectory correctly
-  - Target: AUC ≥ 0.80, Gini ≥ 60%
+  - Target: AUC 0.71-0.73 (realistic ceiling for tree-based models on origination-only data with temporal split)
+    - SHAP-based feature selection: 101 → 50 features with <0.001 AUC loss
+    - Macro features retained by SHAP: CSUSHPINSA, DFF, UNRATE (3 of 6)
+    - Performance ceiling consistent with proper methodology (no leakage features)
 
 ### Basel Framework Integration
 - Basel requires models to be validated across economic regimes (full cycle)
