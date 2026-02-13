@@ -1,12 +1,9 @@
 data/raw/
 data/processed/*.parquet
-*.pkl
 *.joblib
 .env
 __pycache__/
 .ipynb_checkpoints/
-*.csv
-!data/raw/benchmark_population_2014.csv
 .DS_Store
 ._*
 venv/

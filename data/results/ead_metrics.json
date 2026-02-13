@@ -1,0 +1,163 @@
+{
+  "model": "RandomForestRegressor",
+  "features": [
+    "loan_amnt",
+    "funded_amnt",
+    "term",
+    "grade_enc",
+    "annual_inc",
+    "dti",
+    "fico_avg",
+    "int_rate",
+    "installment"
+  ],
+  "n_features": 9,
+  "metrics": {
+    "train": {
+      "set": "Train",
+      "MAE": 2517.0098,
+      "RMSE": 3452.2219,
+      "MAPE": 0.555,
+      "R2": 0.7655
+    },
+    "validation": {
+      "set": "Validation",
+      "MAE": 2373.2525,
+      "RMSE": 3246.2935,
+      "MAPE": 0.3196,
+      "R2": 0.822
+    },
+    "test": {
+      "set": "Test",
+      "MAE": 3230.138,
+      "RMSE": 4259.6591,
+      "MAPE": 0.2377,
+      "R2": 0.7621
+    }
+  },
+  "segment_lookup_metrics": {
+    "MAPE": 0.2432,
+    "MAE": 3265.19,
+    "R2": 0.7688
+  },
+  "portfolio_avg_ccf": 0.6384,
+  "portfolio_avg_ead": 10200.39,
+  "ccf_by_grade": {
+    "A": 0.5061,
+    "B": 0.5564,
+    "C": 0.615,
+    "D": 0.6664,
+    "E": 0.7256,
+    "F": 0.7705,
+    "G": 0.8028
+  },
+  "ccf_by_term": {
+    "36": 0.569,
+    "60": 0.727
+  },
+  "ccf_lookup_table": {
+    "36_A": 0.5008,
+    "36_B": 0.5323,
+    "36_C": 0.5721,
+    "36_D": 0.609,
+    "36_E": 0.6403,
+    "36_F": 0.6703,
+    "36_G": 0.706,
+    "60_A": 0.6296,
+    "60_B": 0.6613,
+    "60_C": 0.6876,
+    "60_D": 0.7231,
+    "60_E": 0.7565,
+    "60_F": 0.7892,
+    "60_G": 0.8125
+  },
+  "sample_comparisons": [
+    {
+      "funded_amnt": 18000.0,
+      "term": 60,
+      "grade": "D",
+      "ead_actual": 16374.456769429376,
+      "ead_predicted": 13281.596041120893,
+      "error_pct": -18.89
+    },
+    {
+      "funded_amnt": 15000.0,
+      "term": 36,
+      "grade": "A",
+      "ead_actual": 12704.642977919179,
+      "ead_predicted": 7611.595607254722,
+      "error_pct": -40.09
+    },
+    {
+      "funded_amnt": 10000.0,
+      "term": 60,
+      "grade": "D",
+      "ead_actual": 8396.323693837858,
+      "ead_predicted": 7552.411248394132,
+      "error_pct": -10.05
+    },
+    {
+      "funded_amnt": 30000.0,
+      "term": 36,
+      "grade": "C",
+      "ead_actual": 19665.75270299974,
+      "ead_predicted": 17161.873822485377,
+      "error_pct": -12.73
+    },
+    {
+      "funded_amnt": 3000.0,
+      "term": 36,
+      "grade": "B",
+      "ead_actual": 2642.5633846735363,
+      "ead_predicted": 1774.0959425687658,
+      "error_pct": -32.86
+    },
+    {
+      "funded_amnt": 8000.0,
+      "term": 36,
+      "grade": "B",
+      "ead_actual": 6440.360100358967,
+      "ead_predicted": 4255.789867358548,
+      "error_pct": -33.92
+    },
+    {
+      "funded_amnt": 9200.0,
+      "term": 36,
+      "grade": "C",
+      "ead_actual": 5363.698053183434,
+      "ead_predicted": 5457.5572667028255,
+      "error_pct": 1.75
+    },
+    {
+      "funded_amnt": 20000.0,
+      "term": 36,
+      "grade": "C",
+      "ead_actual": 15856.587609175753,
+      "ead_predicted": 12148.054826596526,
+      "error_pct": -23.39
+    },
+    {
+      "funded_amnt": 20000.0,
+      "term": 60,
+      "grade": "D",
+      "ead_actual": 17480.618892896448,
+      "ead_predicted": 14914.803744692259,
+      "error_pct": -14.68
+    },
+    {
+      "funded_amnt": 30000.0,
+      "term": 60,
+      "grade": "D",
+      "ead_actual": 26212.056417557116,
+      "ead_predicted": 21236.56531439382,
+      "error_pct": -18.98
+    }
+  ],
+  "mape_target": 0.15,
+  "mape_rf_achieved": 0.2377,
+  "mape_lookup_achieved": 0.2432,
+  "note": "MAPE target not achievable with origination-only features. EAD for term loans is deterministic from amortization schedule. For ECL, use amortization formula with PD hazard rates.",
+  "n_train": 150666,
+  "n_val": 67661,
+  "n_test": 46905
+}

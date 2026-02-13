@@ -1,0 +1,60 @@
+{
+  "model": "Two-Stage (LogisticRegression + GradientBoostingRegressor)",
+  "features": [
+    "loan_amnt",
+    "term",
+    "grade_enc",
+    "annual_inc",
+    "dti",
+    "fico_avg",
+    "int_rate",
+    "revol_util",
+    "open_acc",
+    "total_acc"
+  ],
+  "n_features": 10,
+  "portfolio_avg_lgd": 0.8903,
+  "portfolio_avg_lgd_model": 0.8897,
+  "benchmark_lgd": 0.83,
+  "default_recovery_rate": 0.1097,
+  "lgd_by_grade": {
+    "A": 0.886,
+    "B": 0.8888,
+    "C": 0.8896,
+    "D": 0.8914,
+    "E": 0.893,
+    "F": 0.8907,
+    "G": 0.8907
+  },
+  "stage1": {
+    "model": "LogisticRegression",
+    "target": "recovery_flag (binary)",
+    "train_auc": 0.6049,
+    "val_auc": 0.5562,
+    "test_auc": 0.5222,
+    "recovery_rate_train": 0.7686
+  },
+  "stage2": {
+    "model": "GradientBoostingRegressor",
+    "target": "recovery_rate (continuous, [0,1])",
+    "train_mae": 0.0811,
+    "val_mae": 0.0719,
+    "test_mae": 0.0459,
+    "train_r2": 0.0346,
+    "test_r2": -0.1363
+  },
+  "combined": {
+    "formula": "LGD = 1 - P(recovery) * E[recovery_rate | recovery]",
+    "train_mae": 0.0835,
+    "val_mae": 0.0793,
+    "test_mae": 0.0757,
+    "train_r2": 0.0185,
+    "test_r2": -0.5502
+  },
+  "mae_target": 0.1,
+  "mae_achieved": 0.0757,
+  "target_met": true,
+  "n_train": 150666,
+  "n_val": 67661,
+  "n_test": 46905
+}
