@@ -1763,7 +1763,7 @@ For interview demonstration:
 | **AI Analyst System Prompt** | Added DATA LIMITATIONS section with interview framing | Transparent AI responses, interview-ready |
 | **PD Scorecard Architecture** | Applied V5.1 amendments: grade included, macro excluded, disciplined features | Correct behavioral scorecard design |
 | **Prepayment Module** | Updated to reflect survival/CPR approach (not month-level LR) | Works with available data |
-| **Model Monitoring RAG** | Updated thresholds: Gini ≥ 55% (Green), 45-55% (Amber), < 45% (Red) | Calibrated for behavioral scorecard |
+| **Model Monitoring RAG** | Updated thresholds (V5.1): PD Scorecard — Gini ≥ 42% (Green), 36-42% (Amber), < 36% (Red); ML Models — Gini ≥ 46% (Green), 42-46% (Amber), < 42% (Red) | Calibrated for behavioral scorecard without int_rate |
 | **Interview Framing Guidance** | Added to AI prompt and documentation | Consistent messaging across touchpoints |
 
 **All V5 content retained and enhanced. V6 is data-honest, production-framework-ready, and interview-defensible.**

@@ -903,12 +903,23 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 **Prior Role Connection:** Directly mirrors your Q4'22 behavioral scorecard monitoring with Gini, PSI, CSI, VDI metrics and RAG framework.
 
-1. **Discrimination metrics:**
+**SESSION 6 CONTEXT:** EAD/LGD models are now confirmed working (not falling back to flat constants). Validation should reflect actual model discrimination, not fallback behavior. DCF-ECL at 6.09% ALLL on full 1.35M sample provides backtesting anchor.
+
+1. **PD Model Discrimination metrics:**
    - AUC with 95% confidence intervals (bootstrap)
    - Gini coefficient = 2 × AUC - 1
    - KS statistic and KS plot (max separation between cumulative good/bad distributions)
    - CAP curve (Cumulative Accuracy Profile)
    - Gini over time (by quarter) — track stability
+   - **RAG thresholds for PD Scorecard (V5.1 CORRECTED):**
+     - Green: Gini ≥ 42% (AUC ≥ 0.71)
+     - Amber: Gini 36-42% (AUC 0.68-0.71)
+     - Red: Gini < 36% (AUC < 0.68)
+     - NOTE: Actual scorecard test AUC = 0.6931, Gini = 38.62% → Amber (within V5.1 target)
+   - **RAG thresholds for ML Models:**
+     - Green: Gini ≥ 46% (AUC ≥ 0.73)
+     - Amber: Gini 42-46% (AUC 0.71-0.73)
+     - Red: Gini < 42% (AUC < 0.71)
 
 2. **Calibration metrics:**
    - Hosmer-Lemeshow test (by decile)
@@ -917,7 +928,15 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Expected vs. actual defaults by grade
    - **Scenario Calibration:** Compare actual defaults in different macro regimes to predicted conditional PDs
 
-3. **Stability metrics (the prior role hallmark):**
+3. **EAD/LGD Model Validation (NEW — added after Session 6 confirmed models fire):**
+   - **EAD:** MAPE on held-out defaulted loans, portfolio avg CCF, residual analysis
+   - **LGD Stage 1 (Classification):** AUC for binary recovery prediction, confusion matrix
+   - **LGD Stage 2 (Regression):** MAE, RMSE for recovery rate given recovery
+   - **Combined LGD:** Portfolio avg LGD vs 0.83 benchmark, LGD by grade (verify monotonicity)
+   - **IMPORTANT:** lgd_stage1_model.pkl is dict-wrapped. Unwrap before validation.
+   - RAG thresholds: EAD MAPE < 15% (Green), LGD MAE < 0.10 (Green)
+
+4. **Stability metrics (the prior role hallmark):**
    - **PSI (Population Stability Index):** Compare score distribution: train vs. each test year
      - Green: PSI < 0.10 (stable)
      - Amber: 0.10 ≤ PSI < 0.25 (moderate drift)
@@ -927,13 +946,13 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - RAG status table for all metrics — this is the exact format from your prior institution quarterly reports
    - **Macro PSI:** Apply PSI to macro features separately to show economic drift
 
-4. **Out-of-time validation:**
+5. **Out-of-time validation:**
    - Train on 2007-2015, validate on 2016, test on 2017 and 2018 separately
    - Track Gini/AUC degradation over time
    - This mirrors the benchmark population approach from my prior role (June-Aug 2014 benchmark)
    - **Scenario Validation:** For each vintage, compare predicted PD (with origination macro) to actual default rate
 
-5. **External Benchmark Validation:**
+6. **External Benchmark Validation:**
    - Load benchmark_population_2014.csv (200,000 records)
    - Score population on your developed models
    - Compute PSI: Compare score distribution in benchmark to training population
@@ -941,9 +960,10 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Use as external calibration check
    - Document in notebook: "This mirrors a benchmark validation approach from my prior role where we compared model scores and outcomes to a known cohort"
 
-6. **Backtesting:**
+7. **Backtesting:**
    - Reframe as: Predicted cumulative default rate vs actual cumulative default rate by vintage (not flow-rate-based ECL vs actual losses)
    - By grade: are we over/under-reserving for any segment?
+   - **ECL backtesting:** Compare Session 6 DCF-ECL rates by grade to actual observed loss rates. Pre-FEG DCF-ECL = 6.09% vs 10-K 5.7% (0.39pp gap is expected — no management overlays in our model)
    - Prepayment backtesting: predicted vs. actual prepayment rates by term
    - Note: PD model metrics (AUC, Gini, KS, PSI) are fully based on real observed data. ECL backtesting uses synthetically derived flow rates.
 
@@ -952,6 +972,10 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 **Notebook: `09_Macro_Scenario_and_Strategy_Analysis.ipynb`**
 
 **Prior Role Connection:** FEG macro scenarios with GDP/HPI/unemployment weighted across Baseline/Upside/Downside/Downside 2 (75/5/15/5 weights). Mean reversion for extending beyond explicit forecast horizon.
+
+**SESSION 6 CONTEXT:** Pre-FEG DCF-ECL = 6.09% ALLL (organic, no tuning) on full 1.35M loans. This is the baseline anchor for stress scenarios. Session 6 produced ecl_central.csv as a PLACEHOLDER (identical to ecl_prefeg.csv). This notebook MUST regenerate ecl_central.csv with actual macro overlay and create ecl_postfeg.csv (weighted scenario average). All three ECL views should bracket 5-8% to remain plausible vs LC's 10-K 5.7%.
+
+**SESSION 7 RESOLVED:** credit_policy_analysis.csv was not produced in Session 3 (scorecard) but was successfully generated in Session 7 (Model Validation). Available at data/results/credit_policy_analysis.csv with scorecard cutoff analysis (FICO 520-690).
 
 1. **Macroeconomic data integration (FRED data from Notebook 01):**
    - Already pulled: UNRATE, CSUSHPINSA, A191RL1Q225SBEA, CPIAUCSL, DFF, UMCSENT
@@ -993,7 +1017,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - **Vintage comparison:** "Why is 2017 vintage underperforming 2016 at the same MOB? What changed in origination strategy? What was unemployment at origination?"
    - These are the exact questions from the Sr Credit Strategy Analyst job posting
 
-**Output files:** `macro_scenarios.json`, `strategy_analysis.csv`, `ecl_by_scenario.csv`, `flow_rate_stress_scenarios.csv`
+**Output files:** `macro_scenarios.json`, `strategy_analysis.csv`, `credit_policy_analysis.csv`, `ecl_by_scenario.csv`, `flow_rate_stress_scenarios.csv`, `ecl_central.csv` (REGENERATED with macro overlay), `ecl_postfeg.csv` (NEW — weighted scenario average), `flow_rates_by_scenario.csv`, `flow_rate_stress_comparison.csv`, `sensitivity_results.json`
 
 ---
 
@@ -1080,21 +1104,28 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 
 ## Target Metrics Summary
 
-| Component | Metric | Target |
-|-----------|--------|--------|
-| PD Behavioral Scorecard | Gini | 36-44% |
-| PD Behavioral Scorecard | AUC | 0.68-0.72 |
-| PD Behavioral Scorecard | KS | 26-32% |
-| PD XGBoost | AUC | 0.71-0.73 |
-| PD XGBoost | Gini | 42-46% |
-| PD XGBoost | KS | ≥ 30% |
-| EAD Model | MAPE | < 15% |
-| LGD Model | MAE | < 0.10 |
-| LGD Portfolio Average | Value | ≈ 0.83 |
-| ECL / ALLL Ratio | Value | ≈ 5-7% (benchmarked to 10-K) |
-| PSI (Score Stability) | Value | < 0.10 (Green) |
-| Prepayment Model | MAPE | < 20% |
-| Flow Through Rate | Trend | Stable or declining |
+| Component | Metric | Target | Actual (Session 6) |
+|-----------|--------|--------|---------------------|
+| PD Behavioral Scorecard | Gini | 36-44% | 38.62% (Amber) |
+| PD Behavioral Scorecard | AUC | 0.68-0.72 | 0.6931 (Amber) |
+| PD Behavioral Scorecard | KS | 26-32% | 28.01% (Amber) |
+| PD XGBoost | AUC | 0.71-0.73 | 0.7199 (Amber) |
+| PD XGBoost | Gini | 42-46% | 43.98% (Amber) |
+| PD XGBoost | KS | ≥ 30% | 31.97% (Green) |
+| EAD Model | MAPE | < 15% | 23.77% (Amber) |
+| LGD Model | MAE | < 0.10 | 0.0757 (Green) |
+| LGD Portfolio Average | Value | ≈ 0.83 | 0.884 (within range) |
+| ECL / ALLL Ratio (DCF) | Value | ≈ 5-7% (benchmarked to 10-K) | 6.09% (organic) |
+| ECL / ALLL Ratio (Simple) | Value | ≈ 18-22% (lifetime undiscounted) | 20.35% |
+| PSI (Score Stability) | Value | < 0.10 (Green) | 0.004–0.036 (all Green) |
+| Prepayment Model | MAPE | < 20% | N/A (CPR lookup, no MAPE) |
+| Flow Through Rate | Trend | Monotonic A→G, stable | A(0.17%)→G(2.64%) |
+| DCF Monthly/Batch Match | Ratio | 1.0000× | 1.0000× |
+
+**PD Scorecard RAG Thresholds (V5.1 CORRECTED):**
+- Green: Gini ≥ 42% | Amber: 36-42% | Red: < 36%
+- NOTE: Previous versions incorrectly stated Green ≥ 55%, Amber 45-55%, Red < 45%.
+  Those thresholds assumed int_rate in the model. V5.1 excludes int_rate and adjusts accordingly.
 
 ---
 
@@ -1107,7 +1138,7 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 | Prepayment Model | Empirical curves from historical data; competing risks framework | "LendingClub has significant prepayment — ignoring it would overstate ECL. I built a competing risks model to separately estimate default vs. prepay hazards." |
 | Synthetic Monthly Panel | Reconstructed monthly DPD status from terminal outcomes for flow rate computation | "The public LendingClub dataset provides loan-level terminal outcomes, not monthly payment tapes. I reconstructed approximate monthly DPD status using the amortization schedule and charge-off timing. This captures the forward default cascade reliably, but cannot observe curing events." |
 | WOE/IV Feature Engineering | Q4'22 Credit Card Behavioral Scorecard — computed WoE, IV for VantageScore/FICO bins, utilization, DTI, inquiries, open tradelines | "I monitored these exact metrics quarterly for a $230M+ credit card portfolio" |
-| Scorecard + RAG Framework | Behavioral scorecard with Gini ≥55% threshold, RAG status reporting to stakeholders | "I defined and tracked RAG status for model performance, escalating Amber/Red flags" |
+| Scorecard + RAG Framework | Behavioral scorecard with Gini ≥42% threshold (V5.1), RAG status reporting to stakeholders | "I defined and tracked RAG status for model performance, escalating Amber/Red flags" |
 | Model Validation (Gini/PSI/CSI/VDI) | Quarterly model monitoring with performance windows (6mo) and stability windows (3mo) | "I used 6-month performance windows and 3-month stability windows to assess model drift" |
 | Vintage Analysis | Sherwood Lifetime Loss — marginal/cumulative PD curves by mortgage product × MOB | "I built PD curves by product type and MOB for mortgage portfolios, smoothed with 6-month rolling averages, and related them to macro conditions at origination" |
 | Forward Default Flow Rates | Loss Forecasting receivables tracker — Current→30→60→90→120→150→180 DPD for $18B+ in portfolios. Flow rates computed as simple bucket-to-bucket ratios. | "I tracked monthly receivables across 7 delinquency buckets and computed flow rates as simple ratios between consecutive buckets. For LendingClub, I reconstructed monthly status from terminal data since monthly tapes aren't available." |

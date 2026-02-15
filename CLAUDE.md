@@ -159,6 +159,10 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - Cross-check with: LGD_simple = 1 - (total_rec_prncp / out_prncp)
 - Default recovery_rate should be seeded from the LGD model's portfolio-level output
   - LGD ≈ 83% → recovery_rate default = 0.17
+- **IMPORTANT (Session 6 fix):** lgd_stage1_model.pkl is saved as a dict
+  `{'model': LogisticRegression, 'scaler': StandardScaler}`, NOT a bare model.
+  Code must unwrap the dict, apply scaler.transform() before predict_proba().
+  lgd_stage2_model.pkl is a bare GradientBoostingRegressor (no wrapping).
 
 ### EAD Model
 - Filter to defaulted loans
@@ -189,6 +193,24 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - Discount at effective interest rate
   - Incorporate prepayment rates from Notebook 5.5
   - ECL = Contractual CF (NPV) - Expected CF (NPV)
+- **Session 6 Validated Results (full 1,345,350 loan sample):**
+  - DCF-ECL total: $1,181,186,691 | avg rate: 6.09% (organic, no parameter tuning)
+  - Simple ECL total: $2,388,044,716 | ALLL: 20.35% (lifetime undiscounted, as expected)
+  - LGD mean: 0.884 (within 0.80-0.90 range for unsecured consumer credit)
+  - EAD mean: ~$8,703 (model-predicted, not flat $13K fallback)
+  - DCF monthly/batch reconciliation: perfect 1.0000× match
+  - FTR monotonic: A(0.17%) → G(2.64%)
+  - Panel: 31.4M rows across 1,345,350 loans
+  - Benchmark: 10-K reports 5.7% ALLL. Our 6.09% is 0.39pp higher — expected
+    because LC's reported ALLL includes management overlays, qualitative adjustments,
+    and forward-looking macro scenarios that our Pre-FEG model doesn't replicate.
+- **IMPORTANT (Session 6 fix):** Monthly DCF loss filter must use `!= 0` not `> 0`.
+  In early loan periods, prepayment returns full remaining balance > scheduled payment,
+  producing legitimate negative monthly losses. Discarding negatives inflates total by 3.6×.
+- **IMPORTANT (Session 6 fix):** EAD/LGD models require `fico_avg` and `grade_enc`
+  features that must be engineered before prediction:
+  - fico_avg = (fico_range_low + fico_range_high) / 2
+  - grade_enc = grade mapped to ordinal {A:0, B:1, ..., G:6}
 
 ### Data Limitations (V6 NEW)
 - The LendingClub public dataset (accepted_2007_to_2018Q4.csv) provides one row per loan
@@ -223,11 +245,16 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - **Pre-FEG**: pure model output, no adjustments
   - Rolling 6-month average flow rates
   - No macro overlay
+  - **Session 6 produced:** ecl_prefeg.csv — DCF-ECL at 6.09% ALLL (baseline anchor)
 - **Central**: baseline macro overlay applied to flow rates
   - Macro-adjusted flow rates per scenario
+  - **NOTE:** Session 6 produced ecl_central.csv as PLACEHOLDER (identical to Pre-FEG).
+    Session 8 (NB09) MUST regenerate this file with actual macro regression overlay.
 - **Post-FEG**: weighted across scenarios + qualitative adjustments
   - Compute in Notebook 09 (stress scenarios)
   - Multi-scenario average with expert judgment layer
+  - **NOT YET CREATED.** Session 8 (NB09) creates ecl_postfeg.csv as:
+    ECL_weighted = 0.60 × ECL_baseline + 0.25 × ECL_mild + 0.15 × ECL_stress
 
 ### Stress Testing (Macro Scenarios)
 - Stress at flow rate level, NOT final ECL
@@ -266,10 +293,18 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Discrimination: AUC, Gini, KS, CAP curve, bootstrap CI
 - Calibration: Hosmer-Lemeshow, decile calibration, Brier score
 - Stability: PSI, CSI, VDI for each test period
-- RAG status: Green (Gini ≥ 55%), Amber (45-55%), Red (< 45%)
+- **PD Scorecard RAG (V5.1 CORRECTED):** Green (Gini ≥ 42%), Amber (36-42%), Red (< 36%)
+  - Actual scorecard Gini = 38.62% (from test AUC 0.6931) → Amber status
+  - This is consistent with Camp B methodology (no leakage features, temporal split)
+- **ML Model RAG:** Green (Gini ≥ 46%), Amber (42-46%), Red (< 42%)
+  - XGBoost/LightGBM AUC target: 0.71-0.73
+- **EAD/LGD Validation (added Session 6):**
+  - EAD: MAPE validation, portfolio avg CCF
+  - LGD: Stage 1 AUC (binary recovery), Stage 2 MAE, portfolio avg LGD vs 0.83 benchmark
 - Out-of-time performance by vintage year (2016, 2017, 2018)
 - Backtesting: predicted cumulative default rate vs actual cumulative default rate by vintage
   (NOTE: PD model metrics use real data; flow-rate ECL metrics use synthetic panel)
+- ECL backtesting: compare Session 6 DCF-ECL rates by grade to actual observed loss rates
 - External validation: PSI against benchmark_population_2014.csv
 
 ### External Benchmark Validation (V4 NEW)
