@@ -246,20 +246,20 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
   - Rolling 6-month average flow rates
   - No macro overlay
   - **Session 6 produced:** ecl_prefeg.csv — DCF-ECL at 6.09% ALLL (baseline anchor)
-- **Central**: baseline macro overlay applied to flow rates
-  - Macro-adjusted flow rates per scenario
-  - **NOTE:** Session 6 produced ecl_central.csv as PLACEHOLDER (identical to Pre-FEG).
-    Session 8 (NB09) MUST regenerate this file with actual macro regression overlay.
-- **Post-FEG**: weighted across scenarios + qualitative adjustments
-  - Compute in Notebook 09 (stress scenarios)
-  - Multi-scenario average with expert judgment layer
-  - **NOT YET CREATED.** Session 8 (NB09) creates ecl_postfeg.csv as:
-    ECL_weighted = 0.60 × ECL_baseline + 0.25 × ECL_mild + 0.15 × ECL_stress
+- **Central**: forward-looking macro overlay using 8-quarter UNRATE path from FRED
+  - **V6.1 REWORK:** Previous Session 8 used point delta=0, collapsing Central = Pre-FEG.
+    V6.1 uses actual 2019 FRED UNRATE (~3.9%, 3.6%, 3.5%, 3.5%) as Central path.
+    Central ECL < Pre-FEG because benign macro outlook reduces flow rates.
+- **Post-FEG**: probability-weighted across all 3 scenarios (60/25/15)
+  - ECL_weighted = 0.60 × ECL_central + 0.25 × ECL_mild + 0.15 × ECL_stress
+  - **V6.1 REWORK:** Will regenerate once Central uses multi-quarter forward paths.
+  - Expected ordering: Central < Pre-FEG < Post-FEG
 
-### Stress Testing (Macro Scenarios)
+### Stress Testing (Macro Scenarios — V6.1 Multi-Quarter Paths)
 - Stress at flow rate level, NOT final ECL
+- V6.1: Time-varying stress multipliers per quarter from 8-quarter UNRATE paths
+- Central: actual 2019 FRED UNRATE (declining); Mild: +1.5pp recession; Stress: +5.5pp severe
 - Multiplicative stress on individual flow rates preserves non-linear dynamics
-- Example: 15% stress per flow rate → ~75% increase in cumulative flow-through
 - Three competing risks per month: current → delinquent, default, prepay
 - Show flow rate stress vs output-level stress comparison
 - FEG toggle (Pre-FEG/Central/Post-FEG) applies to BOTH Operational and CECL modes
@@ -336,5 +336,5 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Macro scenario: stress testing with 3-scenario weighting
 - Model validation: quarterly monitoring RAG report
 - External benchmark: mirroring institutional approaches to external validation
-- PyCraft integration: system tools used at prior institution
-- Sherwood curves: vintage analysis and MOB curves
+- Operational forecasting tool: institutional loss forecasting engine
+- Vintage curves: survival analysis and MOB curves

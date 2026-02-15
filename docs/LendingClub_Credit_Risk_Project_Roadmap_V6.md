@@ -10,7 +10,7 @@
 
 **Two Deliverables:**
 1. **Modeling Notebooks** (Weeks 1-2): The analytical backbone — PD behavioral scorecard with grade, ML models with macro, EAD, LGD, ECL, vintage analysis, validation
-2. **LendingClub Risk Analytics Platform** (Week 3): A Streamlit-based portfolio management and loss forecasting tool inspired by PyCraft, with dual-mode forecasting (Operational vs. CECL) and an embedded AI chatbot
+2. **LendingClub Risk Analytics Platform** (Week 3): A Streamlit-based portfolio management and loss forecasting tool inspired by institutional forecasting tools, with dual-mode forecasting (Operational vs. CECL) and an embedded AI chatbot
 
 ---
 
@@ -395,7 +395,7 @@ role at LendingClub (Model Development / Loss Forecasting / Strategy teams).
 #### Dual-Mode Forecasting Engine
 Two methods for projection engine:
 
-1. **method='extend' (PyCraft style, OPERATIONAL MODE):**
+1. **method='extend' (operational extend mode):**
    - Take 6-month rolling average of historical flow rates
    - Extend flat across entire projection horizon (10 years)
    - Simple, operationally practical
@@ -459,11 +459,11 @@ Two methods for projection engine:
 Two modes:
 
 1. **Operational Mode (default):** Single portfolio-level liquidation factor, set via Streamlit slider.
-   Simple, matches PyCraft. Example: "3.2% monthly liquidation" applied flat.
+   Simple, matches operational forecasting approach. Example: "3.2% monthly liquidation" applied flat.
    - In Operational mode, both Liquidation Factor and New Originations inputs are shown to the user.
 
 2. **CECL Mode:** Differentiated by loan term (36 vs 60 months) and vintage age. Empirical
-   paydown curves computed from LendingClub data. Interview framing: "PyCraft used portfolio-level
+   paydown curves computed from LendingClub data. Interview framing: "The operational tool used portfolio-level
    because it was operational planning. I also built CECL-aligned version where prepayment rates
    vary by term and vintage."
    - In CECL mode, only Liquidation Factor is shown; New Originations is hidden (hardcoded to $0)
@@ -504,14 +504,14 @@ Two modes:
 - Scorecard + RAG → Behavioral scorecard RAG status framework
 - Macro Integration → FEG scenarios with GDP/HPI/unemployment weights (ML models and stress testing only)
 - Validation (Gini/PSI/CSI/VDI) → Quarterly model monitoring
-- Vintage Analysis → Sherwood PD curves by mortgage product × MOB
+- Vintage Analysis → Cumulative PD curves by mortgage product × MOB
 - Prepayment Model → Empirical curves from historical data; competing risks framework
 - Synthetic Monthly Panel → Reconstructed monthly DPD status from terminal outcomes for flow rate computation
 - Roll-Rate / Flow-Rate Analysis → Forward default flow rates from synthetic receivables tracker
   (one-directional only; curing unobservable)
 - Flow Through Rate → Cross-check against PD, early warning signal
 - ECL/CECL → ALLL tracker, Pre-FEG/Central/Post-FEG computation
-- Forecasting Tool → PyCraft (Django-based loss forecasting tool) with dual operational/regulatory modes
+- Forecasting Tool → Proprietary loss forecasting engine with dual operational/regulatory modes
 - Liquidation Factors → Portfolio-level (operational) vs. differentiated by term/vintage (CECL)
 - External Benchmark Validation → Benchmark population approach for PSI and calibration
 
@@ -858,7 +858,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 5. **Vintage analysis:**
    - Cumulative default rate by origination year, plotted against MOB
-   - This directly mirrors the Sherwood PD curves you built at my prior institution (Product Type × MOB grid)
+   - This directly mirrors the cumulative PD curves built at my prior institution (Product Type × MOB grid)
    - Identify which vintages are performing better/worse than expected
    - Compute smoothed marginal PD curves (6-month rolling average, as you did at my prior institution)
    - **Macro Context:** Overlay macro variables (unemployment, HPI) at origination to explain vintage differences
@@ -973,7 +973,7 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 **Prior Role Connection:** FEG macro scenarios with GDP/HPI/unemployment weighted across Baseline/Upside/Downside/Downside 2 (75/5/15/5 weights). Mean reversion for extending beyond explicit forecast horizon.
 
-**SESSION 6 CONTEXT:** Pre-FEG DCF-ECL = 6.09% ALLL (organic, no tuning) on full 1.35M loans. This is the baseline anchor for stress scenarios. Session 6 produced ecl_central.csv as a PLACEHOLDER (identical to ecl_prefeg.csv). This notebook MUST regenerate ecl_central.csv with actual macro overlay and create ecl_postfeg.csv (weighted scenario average). All three ECL views should bracket 5-8% to remain plausible vs LC's 10-K 5.7%.
+**SESSION 8 REWORK (V6.1):** Previous implementation used point deltas (unrate_delta=0.0 for baseline), collapsing Central = Pre-FEG. V6.1 reworks to multi-quarter forward UNRATE paths matching institutional FEG framework: Central uses actual 2019 FRED UNRATE (declining to ~3.5%), Mild/Stress define recession trajectories. 8-quarter explicit forecast + mean reversion. Expected ECL ordering: Central < Pre-FEG < Post-FEG.
 
 **SESSION 7 RESOLVED:** credit_policy_analysis.csv was not produced in Session 3 (scorecard) but was successfully generated in Session 7 (Model Validation). Available at data/results/credit_policy_analysis.csv with scorecard cutoff analysis (FICO 520-690).
 
@@ -983,27 +983,32 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
    - Build regression: default_rate ~ f(unemployment, GDP, HPI)
    - Estimate PD elasticity: "for each 1% increase in unemployment, PD increases by X bps"
 
-2. **Scenario definition (mirroring FEG framework):**
-   - **Baseline (60%):** Current trajectory from FRED forecasts (or assume rates stabilize at recent levels)
-   - **Mild Downturn (25%):** Unemployment +1.5pp, GDP -1%
-   - **Stress (15%):** Unemployment +3pp, GDP -3% (recession scenario)
+2. **Scenario definition (V6.1 — Multi-Quarter Forward Paths):**
+   Reporting date = Q4 2018. Historical baseline UNRATE = 4.6% (2016-2018 avg).
+   Each scenario defines an 8-quarter forward UNRATE path (Q1 2019 – Q4 2020):
+   - **Central (60%):** Actual realized FRED UNRATE for 2019 (~3.9%, 3.6%, 3.5%, 3.5%) + mean reversion over remaining 4 quarters. Economy improving → Central ECL < Pre-FEG.
+   - **Mild Downturn (25%):** UNRATE rises +1.5pp then mean-reverts (4.8%, 5.2%, 5.6%, 6.0%, 6.0%, 5.8%, 5.5%, 5.3%)
+   - **Stress (15%):** UNRATE rises +5.5pp then mean-reverts (5.5%, 7.0%, 8.5%, 9.5%, 10.0%, 9.5%, 9.0%, 8.5%)
    - Weighted average ECL = Σ(weight_i × ECL_i)
+   - **Prior role alignment:** Mirrors institutional FEG with vendor-sourced macro paths across 4 scenarios, weighted and extended via mean reversion.
 
-3. **Flow Rate Stress:**
-   - **Application Level:** Adjust individual flow rates (e.g., increase each by 15%), NOT applied as a multiplier on final ECL output
-   - **Why:** Compounding through the waterfall is multiplicative. A 15% stress on each flow rate produces ~75% increase in cumulative flow-through (because 1.15^7 ≈ 2.66), vs. only 15% increase if applied to ECL output. Also changes loss timing curve shape (losses accelerate and concentrate under stress). This preserves non-linear dynamics of delinquency behavior.
-   - **Implementation:** For each scenario, adjust each flow rate by scenario-specific factor:
-     - Baseline: 1.0× (no adjustment)
-     - Mild Downturn: 1.10× (10% increase in each flow rate)
-     - Stress: 1.20× (20% increase in each flow rate)
+3. **Flow Rate Stress (Time-Varying):**
+   - **Application Level:** Adjust individual flow rates per quarter using scenario-specific UNRATE paths, NOT applied as a multiplier on final ECL output
+   - **Why:** Compounding through the waterfall is multiplicative. Also changes loss timing curve shape (losses accelerate and concentrate under stress). This preserves non-linear dynamics of delinquency behavior.
+   - **Implementation:** For each scenario and each quarter, compute:
+     stress_multiplier_q = elasticity × (unrate_q - baseline_unrate) / baseline_unrate
+     Apply: flow_rate_stressed_q = flow_rate × (1 + stress_multiplier_q)
+   - **Central multipliers are NEGATIVE** (UNRATE declining → lower flow rates → lower ECL)
+   - **Mild/Stress multipliers are POSITIVE** (UNRATE rising → higher flow rates → higher ECL)
    - **Note on Synthetic Base:** Flow rate stress is applied to synthetically derived rates. The compounding math is correct. Dollar amounts are approximate.
 
 4. **Mean reversion for extended horizon:**
-   - Explicit macro forecast: 8 quarters (2 years)
-   - Beyond 8 quarters: mean-revert to long-run averages over remaining life
-   - This explains the 8 quarters vs. 160 quarters distinction:
-     - 8 quarters = explicit econometric forecast
+   - Explicit macro forecast: 8 quarters (2 years), with scenario-specific UNRATE paths
+   - Beyond 8 quarters: mean-revert to long-run UNRATE average (~5.5%) over remaining life
+   - This explains the 8 quarters vs. 160 quarters distinction from prior institution:
+     - 8 quarters = explicit econometric forecast (or, in our case, actual FRED data with hindsight)
      - 160 quarters = 40 years remaining life for mortgages, with mean-reverted macro inputs after Q8
+   - For our LC portfolio (3-5 year personal loans), remaining life is much shorter, so mean reversion has less impact
 
 5. **Sensitivity analysis:**
    - Impact of ±1% unemployment on portfolio ECL
@@ -1025,21 +1030,21 @@ streamlit, anthropic, jupyter, lifelines>=0.28 (for survival analysis/competing 
 
 #### Days 15-18: Build the Streamlit Risk Analytics Platform
 
-This is the PyCraft-equivalent tool. The high-level pages are:
+This is the institutional-equivalent forecasting tool. The high-level pages are:
 
 1. **Portfolio Overview Dashboard** — KPIs, composition, default rates by grade/vintage/state
 
 2. **Roll-Rate Analysis** — Receivables tracker with flow rates, delinquency flow visualization
    - Add sidebar disclaimer: "Flow rates derived from synthetic monthly panel reconstruction. Production implementation would use observed monthly payment data."
 
-3. **Vintage Performance** — Cumulative default curves by vintage × MOB (Sherwood-style)
+3. **Vintage Performance** — Cumulative default curves by vintage × MOB
 
-4. **ECL Forecasting Engine** — The PyCraft core with dual-mode toggle:
+4. **ECL Forecasting Engine** — The forecasting engine core with dual-mode toggle:
    - **Dual-Mode Forecasting:**
      - Radio button: "Operational Forecast (Extend)" vs. "CECL Reserve Estimation (CECL)"
      - **Operational Mode (extend):**
        - Uses 6-month rolling average flow rates extended flat across 10-year projection
-       - Simple, operationally practical — what PyCraft does
+       - Simple, operationally practical — what operational forecasting tools do
        - Shows "What would GCO/NCO be if current trends continue?"
      - **CECL Mode (cecl):**
        - Phase 1 (24 months, default): Macro-adjusted flow rates based on scenario
@@ -1095,7 +1100,7 @@ This is the PyCraft-equivalent tool. The high-level pages are:
    - "Why grade in scorecard?" → Behavioral scorecard, loan already on books, grade is known attribute
    - "Why macro in ML but not scorecard?" → Linear model confounding with LC growth trajectory; tree models handle non-linearity correctly
    - "Why prepayment model?" → Competing risks, LendingClub has significant prepayment
-   - "Why dual-mode forecasting?" → Operational (PyCraft) vs. regulatory (CECL) needs
+   - "Why dual-mode forecasting?" → Operational vs. regulatory (CECL) needs
    - "Why stress at flow rate level?" → Multiplicative dynamics
    - "Flow Through Rate?" → Cross-check against PD, early warning
    - "Why synthetic panel?" → Answered in talking points below
@@ -1140,14 +1145,14 @@ This is the PyCraft-equivalent tool. The high-level pages are:
 | WOE/IV Feature Engineering | Q4'22 Credit Card Behavioral Scorecard — computed WoE, IV for VantageScore/FICO bins, utilization, DTI, inquiries, open tradelines | "I monitored these exact metrics quarterly for a $230M+ credit card portfolio" |
 | Scorecard + RAG Framework | Behavioral scorecard with Gini ≥42% threshold (V5.1), RAG status reporting to stakeholders | "I defined and tracked RAG status for model performance, escalating Amber/Red flags" |
 | Model Validation (Gini/PSI/CSI/VDI) | Quarterly model monitoring with performance windows (6mo) and stability windows (3mo) | "I used 6-month performance windows and 3-month stability windows to assess model drift" |
-| Vintage Analysis | Sherwood Lifetime Loss — marginal/cumulative PD curves by mortgage product × MOB | "I built PD curves by product type and MOB for mortgage portfolios, smoothed with 6-month rolling averages, and related them to macro conditions at origination" |
+| Vintage Analysis | Lifetime Loss — marginal/cumulative PD curves by mortgage product × MOB | "I built PD curves by product type and MOB for mortgage portfolios, smoothed with 6-month rolling averages, and related them to macro conditions at origination" |
 | Forward Default Flow Rates | Loss Forecasting receivables tracker — Current→30→60→90→120→150→180 DPD for $18B+ in portfolios. Flow rates computed as simple bucket-to-bucket ratios. | "I tracked monthly receivables across 7 delinquency buckets and computed flow rates as simple ratios between consecutive buckets. For LendingClub, I reconstructed monthly status from terminal data since monthly tapes aren't available." |
 | Flow Through Rate | Loss forecasting output metric: product of flow rates showing ultimate GCO rate | "I tracked Flow Through Rate as an early warning signal — if it trends up, origination quality or economic conditions are deteriorating" |
-| Dual-Mode Forecasting | PyCraft (operational extend method) vs. CECL regulatory mode | "I used PyCraft for AOP/FRP planning with simple rolling average extensions. For CECL, I built a three-phase approach with macro adjustment, reversion, and historical baseline." |
+| Dual-Mode Forecasting | Operational (extend method) vs. CECL regulatory mode | "I used a proprietary forecasting tool for AOP/FRP planning with simple rolling average extensions. For CECL, I built a three-phase approach with macro adjustment, reversion, and historical baseline." |
 | Macro Scenarios | FEG scenarios with Baseline 75%, Upside 5%, Downside 15%, Downside2 5%. Mean reversion. | "I computed weighted macro forecasts across 4 scenarios and extended via mean reversion for the full remaining loan life" |
 | ECL / CECL Framework | ALLL tracker, Pre-FEG/Central/Post-FEG ECL computation | "I maintained the monthly ALLL tracker and understood the three ECL views used for regulatory reporting — Pre-FEG, Central, Post-FEG" |
-| Liquidation Factors | Portfolio-level (operational) vs. differentiated by term/vintage (CECL) | "PyCraft used portfolio-level for simplicity. For CECL, I built empirical prepayment curves differentiated by term and vintage." |
-| Forecasting Tool | PyCraft — Django-based tool taking receivables input, applying liquidation factors, projecting 10-year GCO/NCO | "I used a proprietary loss forecasting tool for annual financial resource planning" |
+| Liquidation Factors | Portfolio-level (operational) vs. differentiated by term/vintage (CECL) | "The operational tool used portfolio-level for simplicity. For CECL, I built empirical prepayment curves differentiated by term and vintage." |
+| Forecasting Tool | Proprietary Python/Django-based tool taking receivables input, applying liquidation factors, projecting 10-year GCO/NCO | "I used a proprietary loss forecasting tool for annual financial resource planning" |
 | Portfolio Monitoring | Monthly receivables for multiple portfolio segments | "I tracked receivables across 10+ portfolio segments, reporting across reservable, reportable, and operational views" |
 | External Benchmark Validation | Benchmark population approach for PSI and calibration | "I validated models against a known June-Aug 2014 benchmark population to ensure out-of-sample generalization" |
 
@@ -1210,7 +1215,7 @@ lifelines>=0.28
 
 7. **"Flow Through Rate?"** — "It's the product of all flow rates, showing the ultimate charge-off rate. I track it as an early warning signal — if it trends up, something's wrong with origination or the economy."
 
-8. **"Dual-mode forecasting?"** — "Operational mode (extend) is what PyCraft does for planning — simple, rolling averages extended flat. CECL mode is three-phase with macro adjustment, reversion, and historical baseline. They serve different regulatory vs. operational needs."
+8. **"Dual-mode forecasting?"** — "Operational mode (extend) is what operational forecasting tools do for planning — simple, rolling averages extended flat. CECL mode is three-phase with macro adjustment, reversion, and historical baseline. They serve different regulatory vs. operational needs."
 
 9. **"Why stress at flow rate level?"** — "The waterfall is multiplicative. A 15% stress on each flow rate produces ~75% cumulative effect (because 1.15^7 ≈ 2.66), which correctly reflects how delinquency accelerates under stress."
 

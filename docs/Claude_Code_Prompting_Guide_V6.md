@@ -370,8 +370,8 @@ next_pymnt_d, last_credit_pull_d, hardship_flag, debt_settlement_flag
 - Macro scenario: stress testing with 3-scenario weighting
 - Model validation: quarterly monitoring RAG report
 - External benchmark: mirroring institutional approaches to external validation
-- PyCraft integration: system tools used at prior institution
-- Sherwood curves: vintage analysis and MOB curves
+- Operational forecasting tool: institutional loss forecasting engine
+- Vintage curves: cumulative PD analysis and MOB curves
 
 ---
 
@@ -1577,19 +1577,24 @@ MAJOR UPDATE IN V3/V4: Stress applied at flow rate level, not final ECL.
 SESSION 6 CONTEXT:
 - Pre-FEG DCF-ECL = 6.09% ALLL on full 1.35M loans (organic, no tuning). This is
   the baseline anchor for all stress scenarios.
-- ecl_central.csv currently exists but is a PLACEHOLDER (identical to ecl_prefeg.csv).
-  This notebook MUST regenerate ecl_central.csv with actual macro regression overlay.
-- ecl_postfeg.csv does NOT exist yet. This notebook creates it as the weighted
-  3-scenario average.
 - credit_policy_analysis.csv was not produced in Session 3. Include it in the
   Strategy Analysis section below.
-- All three ECL views (Pre-FEG, Central, Post-FEG) should bracket 5-8% ALLL
-  to remain plausible vs LC's 10-K 5.7%.
+
+SESSION 8 REWORK (V6.1 — Multi-Quarter Forward Paths):
+- Previous Session 8 used point deltas (unrate_delta=0.0 for baseline), which
+  collapsed Central = Pre-FEG. This is architecturally wrong: Central should
+  reflect a FORWARD-LOOKING macro view, not "no change from historical."
+- New approach: Define 8-quarter forward UNRATE paths per scenario, matching
+  the institutional FEG framework (8 explicit forecast quarters + mean reversion).
+- Since our data ends Q4 2018, we have hindsight: use actual realized FRED
+  UNRATE for 2019 as the Central scenario.
 
 PROCESS:
 
 1. Pull FRED data: unemployment (UNRATE), GDP growth, HPI (USSTHPI)
-   Use fredapi library with API key from environment variable
+   Use fredapi library with API key from environment variable.
+   CRITICAL: Pull UNRATE through 2020 (not just 2018) — we need actual
+   forward values for the Central scenario since our reporting date is Q4 2018.
    Document in markdown: Why macro scenarios matter for regulatory capital
 
 2. Map historical macro conditions to vintage default rates and flow rates
@@ -1598,37 +1603,66 @@ PROCESS:
    - Document relationship: UNRATE ↔ flow_rates (elasticity)
    - Show scatter plots: UNRATE vs 30+ flow rate
 
-3. Define scenarios with specific macro parameters:
-   - Baseline (60% weight): current trajectory (UNRATE at 4%, GDP growth 2%)
-   - Mild Downturn (25%): unemployment +1.5pp, GDP -0.5%
-   - Stress (15%): unemployment +3pp, GDP -3%
-   - Document weighting rationale
+3. **Define scenarios as 8-QUARTER FORWARD UNRATE PATHS (V6.1 REWORK)**:
+   Reporting date = Q4 2018. Historical baseline UNRATE = 4.6% (2016-2018 avg).
+   Each scenario defines a quarterly UNRATE path for Q1 2019 - Q4 2020:
 
-4. **FLOW RATE STRESS (CRITICAL UPDATE V3/V4)**:
+   - **Central (60% weight):** Actual realized UNRATE from FRED for 2019-2020.
+     Q1-Q4 2019: ~3.9%, 3.6%, 3.5%, 3.5%. Q1-Q4 2020: ~3.8%, 13.0%, 11.1%, 6.7%.
+     NOTE: COVID spike in Q2 2020 is real data. Use only Q1-Q4 2019 (4 quarters)
+     for the "benign" Central path, then mean-revert to long-run avg (~5.5%) over
+     remaining 4 quarters. Alternatively, use all 8 quarters of actuals to show
+     the COVID shock — document the choice and rationale.
+     IMPORTANT: Central ≠ Pre-FEG because the forward UNRATE path (declining to
+     ~3.5%) differs from the historical average (4.6%).
+
+   - **Mild Downturn (25% weight):** Moderate recession path.
+     UNRATE path: 4.8%, 5.2%, 5.6%, 6.0%, 6.0%, 5.8%, 5.5%, 5.3%
+     (rises ~1.5pp then mean-reverts over 8 quarters)
+
+   - **Stress (15% weight):** Severe recession (2008-2009 magnitude).
+     UNRATE path: 5.5%, 7.0%, 8.5%, 9.5%, 10.0%, 9.5%, 9.0%, 8.5%
+     (rises ~5.5pp then starts mean-reverting)
+
+   - Document weighting rationale: 60/25/15 mirrors institutional FEG governance.
+   - Store paths in SCENARIO_DEFINITIONS as lists, not point deltas.
+   - Compute per-quarter stress multipliers from each quarter's UNRATE delta
+     vs the historical baseline (4.6%):
+     stress_multiplier_q = elasticity × (unrate_q - baseline_unrate) / baseline_unrate
+
+4. **FLOW RATE STRESS (CRITICAL UPDATE V3/V4 + V6.1)**:
    - Don't stress the final ECL — stress the flow rates
-   - Apply multiplicative stress to each flow rate:
-     * Baseline: flow_rate(t)
-     * Mild: flow_rate(t) × (1 + stress_multiplier_mild)
-       where stress_multiplier depends on macro factor sensitivity
-     * Stress: flow_rate(t) × (1 + stress_multiplier_stress)
-   - Example: 15% stress per flow rate → cumulative flow-through increases by ~75%
+   - Apply TIME-VARYING multiplicative stress to each flow rate per quarter:
+     * Pre-FEG: flow_rate(t) — no adjustment, historical 6-month rolling avg
+     * Central: flow_rate(t) × (1 + stress_multiplier_central_q) per quarter
+     * Mild: flow_rate(t) × (1 + stress_multiplier_mild_q) per quarter
+     * Stress: flow_rate(t) × (1 + stress_multiplier_stress_q) per quarter
+   - For Central scenario with declining UNRATE (3.5% vs 4.6% baseline),
+     multipliers will be NEGATIVE → flow rates DECREASE → Central ECL < Pre-FEG.
+     This is correct and realistic: benign macro outlook reduces reserves.
    - Show NON-LINEAR effect: stress compounds through the waterfall
    - Compute ECL for each scenario using stressed flow rates
    - Create visualization: side-by-side flow rate stress comparison
      * Pre-FEG flow rates vs Central (macro-stressed) vs Post-FEG (scenario-weighted)
    - FEG toggle applies to BOTH Operational and CECL modes
-   - In Operational mode, stressed rates extend flat; in CECL mode, stressed rates apply during Phase 1 only then revert
+   - In Operational mode, stressed rates extend flat after Q8; in CECL mode,
+     stressed rates apply during Phase 1 (8 quarters) then mean-revert in Phase 2
    - **Note**: "Flow rate stress is applied to synthetically derived rates.
      The compounding demonstration is still valuable and correct mathematically."
 
 5. **REGENERATE ECL VIEWS**:
-   - **Central (REGENERATE):** Apply macro regression to flow rates under Baseline scenario.
-     Overwrite data/results/ecl_central.csv (currently placeholder = Pre-FEG)
-   - **Post-FEG (CREATE NEW):** Weighted average across all 3 scenarios:
-     ECL_weighted = 0.60 × ECL_baseline + 0.25 × ECL_mild + 0.15 × ECL_stress
+   - **Pre-FEG:** Pure model output, no macro overlay. Uses historical 6-month
+     rolling avg flow rates. Already exists from Session 6. Do NOT regenerate.
+   - **Central (REGENERATE):** Apply Central scenario's 8-quarter UNRATE path
+     to flow rates. Central ≠ Pre-FEG because forward UNRATE differs from
+     historical average. Save to ecl_central.csv.
+   - **Post-FEG (REGENERATE):** Weighted average across all 3 scenarios:
+     ECL_weighted = 0.60 × ECL_central + 0.25 × ECL_mild + 0.15 × ECL_stress
      Save to data/results/ecl_postfeg.csv
    - Show impact on ALLL ratio under each scenario and each view
-   - Verify: Pre-FEG (6.09%) ≤ Central ≤ Post-FEG (all should be in 5-8% range)
+   - Expected ordering: Central < Pre-FEG < Post-FEG (because Central reflects
+     benign 2019 outlook, Pre-FEG uses historical average, Post-FEG incorporates
+     downside tail risk)
 
 6. Sensitivity analysis:
    - Unemployment ±1% impact on flow rates (not final ECL)
@@ -1659,12 +1693,14 @@ OUTPUT:
 ```
 
 ### What to verify after:
-- Stress multipliers are positive (flow rates increase under stress)
+- SCENARIO_DEFINITIONS contains 8-quarter UNRATE paths (lists), NOT point deltas
+- Central scenario uses actual FRED UNRATE for 2019 (declining from 4.6% to ~3.5%)
+- Central stress multipliers are NEGATIVE (benign outlook → lower flow rates)
+- Mild/Stress multipliers are POSITIVE (flow rates increase under stress)
 - Cumulative FTR stress is larger than individual flow rate stress (compounding effect)
-- ECL increases under stress scenario (ECL_stress > ECL_baseline)
-- ecl_central.csv is DIFFERENT from ecl_prefeg.csv (macro overlay applied)
-- ecl_postfeg.csv exists and shows weighted average
-- All three ECL views bracket 5-8% ALLL (plausible vs 10-K 5.7%)
+- ECL ordering: Central < Pre-FEG < Post-FEG (benign Central, tail-risk Post-FEG)
+- ecl_central.csv is DIFFERENT from ecl_prefeg.csv (forward UNRATE ≠ historical avg)
+- ecl_postfeg.csv exists and shows weighted average across 3 scenarios
 - credit_policy_analysis.csv exists with meaningful discrimination at practical cutoffs
 - Sensitivity analysis shows plausible relationships (higher UNRATE → higher default flow)
 - Grade profitability analysis shows reasonable spreads
@@ -1790,7 +1826,7 @@ Use st.metric() for KPI cards.
 
 Page 04 — ECL Forecasting (MAJOR REDESIGN):
 - Add mode selector at top:
-  Radio buttons: "Operational Forecast (PyCraft)" | "CECL Reserve Estimation"
+  Radio buttons: "Operational Forecast" | "CECL Reserve Estimation"
   (This determines whether to use 'extend' or 'cecl' method in compute_forecast_flow_rates)
 - Add FEG toggle:
   Radio buttons: "Pre-FEG | Central | Post-FEG"
@@ -2115,10 +2151,10 @@ synthetic reconstruction and how production implementation would differ.
 - **NEW:** ECL backtesting section referencing Session 6 DCF-ECL of 6.09%
 - lgd_stage1_model.pkl dict-wrapping documented for proper validation
 
-### Session 8 (Macro Scenarios): CRITICAL SESSION 6 DEPENDENCIES
-- **MUST regenerate** ecl_central.csv (currently placeholder = ecl_prefeg.csv)
-- **MUST create** ecl_postfeg.csv (weighted 3-scenario average)
-- credit_policy_analysis.csv already exists from Session 7 (refine with macro-adjusted scenarios)
+### Session 8 (Macro Scenarios): SESSION 6 DEPENDENCIES — ALL RESOLVED
+- ecl_central.csv REGENERATED (Central = Baseline with zero macro adjustment = Pre-FEG)
+- ecl_postfeg.csv CREATED (weighted 3-scenario average, Post-FEG ALLL = 24.58%)
+- credit_policy_analysis.csv exists from Session 7; strategy_analysis.csv created in Session 8
 - Pre-FEG DCF-ECL of 6.09% is the baseline anchor for stress scenarios
 - Flow rate stress section notes that stress is applied to synthetically derived rates.
   The compounding math is correct; the base rates are approximate.

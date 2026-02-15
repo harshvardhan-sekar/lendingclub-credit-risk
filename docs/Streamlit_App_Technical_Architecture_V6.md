@@ -17,7 +17,7 @@ app/
 │   ├── 01_portfolio_overview.py     # Dashboard: KPIs, composition, default rates, flow-through rate
 │   ├── 02_roll_rate_analysis.py     # Flow rates, receivables tracker, flow-through rates
 │   ├── 03_vintage_performance.py    # Cumulative default curves by vintage × MOB
-│   ├── 04_ecl_forecasting.py        # PyCraft core: dual-mode forecasting, FEG toggle, assumption upload/export
+│   ├── 04_ecl_forecasting.py        # Forecasting engine: dual-mode forecasting, FEG toggle, assumption upload/export
 │   ├── 05_scenario_analysis.py      # Macro scenarios, stress at flow rate level, sensitivity
 │   ├── 06_model_monitoring.py       # Gini/PSI/CSI/VDI tracking with RAG + benchmark population validation
 │   └── 07_ai_analyst.py             # Claude-powered chatbot
@@ -458,7 +458,7 @@ def project_balances(current_balances, flow_rates, n_months,
                      liquidation_factor=0.0, new_origination=0.0):
     """
     Project balances forward using flow rates.
-    This is the core PyCraft projection logic.
+    This is the core forward projection logic.
 
     For each projected month t:
         Projected_30DPD(t) = flow_rate_30 × Current_balance(t-1)
@@ -586,9 +586,9 @@ def identify_underperforming_vintages(vintage_curves, benchmark_mob=24):
 
 ---
 
-### Page 4: ECL Forecasting Engine (The PyCraft Core) — MAJOR OVERHAUL
+### Page 4: ECL Forecasting Engine (The Forecasting Engine) — MAJOR OVERHAUL
 
-**Purpose:** This is the heart of the tool. It takes a receivables snapshot and projects forward 10 years of receivables, GCO, NCO, recoveries, flow rates, and ECL — exactly what PyCraft does. Now features dual-mode forecasting (Operational vs. CECL) and FEG three-scenario framework.
+**Purpose:** This is the heart of the tool. It takes a receivables snapshot and projects forward 10 years of receivables, GCO, NCO, recoveries, flow rates, and ECL — exactly what operational forecasting tools do. Now features dual-mode forecasting (Operational vs. CECL) and FEG three-scenario framework.
 
 **Data Limitation Disclaimer:**
 Display an `st.info()` box at the top:
@@ -601,7 +601,7 @@ Display an `st.info()` box at the top:
 ├──────────────────────────────────────────────────────┤
 │                                                      │
 │  ┌─ MODE SELECTION ──────────────────────────────────┐│
-│  │ ○ Operational Forecast (PyCraft)                  ││
+│  │ ○ Operational Forecast                  ││
 │  │ ○ CECL Reserve Estimation (ASC 326)               ││
 │  │                                                  ││
 │  │ ┌─ FEG Scenario Selection ──────────────────────┐││
@@ -710,7 +710,7 @@ Both columns are 100% populated in the LendingClub dataset, allowing full LGD an
 ```python
 class ECLProjector:
     """
-    Core forecasting engine — the PyCraft equivalent (V6 Enhanced).
+    Core forecasting engine — the operational forecasting engine (V6 Enhanced).
 
     Takes a receivables snapshot and assumptions, projects forward
     using flow rates (simple bucket-to-bucket ratios), and computes
@@ -726,7 +726,7 @@ class ECLProjector:
     replace the synthetic panel, enabling curing rates and two-way transitions.
 
     DUAL-MODE DESIGN:
-    1. Operational Mode (PyCraft-style):
+    1. Operational Mode (extend-style):
        - Uses 6-month rolling average of historical flow rates
        - Applies flat across entire projection horizon
        - Simple, operationally practical
@@ -846,7 +846,7 @@ class ECLProjector:
         Compute flow rates for the forecast horizon.
         Two modes:
 
-        method='extend' (OPERATIONAL MODE, PyCraft style):
+        method='extend' (OPERATIONAL MODE, operational style):
             - Take 6-month rolling average of flow rates
             - Apply flat across entire projection horizon
             - Simple, operationally practical
@@ -944,7 +944,7 @@ class ECLProjector:
 
     def project(self, n_months=120):
         """
-        Run the forward projection. This is the core PyCraft algorithm (now dual-mode).
+        Run the forward projection. This is the core forecasting algorithm (now dual-mode).
 
         For each month t = 1 to n_months:
             1. Apply flow rates to project balances into next DPD bucket:
@@ -1314,7 +1314,7 @@ The AI analyst now understands:
 - **LGD Columns:** `recoveries` and `collection_recovery_fee` available for LGD analysis
 - **Flow-Through Rate concept:** Current → GCO cumulative transition rate, early warning signal
 - **Pre-FEG/Central/Post-FEG distinction:** Different assumptions for model output vs. macro-adjusted vs. weighted scenarios
-- **Dual-mode forecasting:** Operational (PyCraft-style flat rates) vs. CECL (three-phase R&S approach)
+- **Dual-mode forecasting:** Operational (operational-style flat rates) vs. CECL (three-phase R&S approach)
 - **Competing risks:** Default vs. prepayment dynamics in portfolio projections
 - **Flow-rate-level stress:** Stress applied multiplicatively to individual transitions, not final ECL
 - **Synthetic monthly panel:** Data reconstruction methodology and limitations
@@ -1424,7 +1424,7 @@ class PortfolioAnalystBot:
            - Post-FEG: Weighted average across all scenarios + qualitative adjustment
 
         3. DUAL-MODE FORECASTING:
-           - Operational Mode: 6-month rolling average flow rates extended flat (PyCraft)
+           - Operational Mode: 6-month rolling average flow rates extended flat
            - CECL Mode: R&S period (macro-adjusted) → Reversion → Long-run historical average
 
         4. FLOW-RATE-LEVEL STRESS:
@@ -1677,7 +1677,7 @@ st.markdown("""
 st.sidebar.title("📊 LC Risk Analytics")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Portfolio Management & Loss Forecasting Platform**")
-st.sidebar.markdown("*Inspired by PyCraft — V6*")
+st.sidebar.markdown("*LendingClub Credit Risk Analytics — V6*")
 st.sidebar.markdown("---")
 st.sidebar.info(
     "ℹ️ **Data Note:** Flow rates derived from synthetic monthly panel "

@@ -1,10 +1,22 @@
+# Raw data (large files)
 data/raw/
+
+# Processed data
 data/processed/*.parquet
-*.joblib
+
+# Pickle files (binary, security risk in public repos)
+*.pkl
+
+# Environment and secrets
 .env
+*.joblib
+
+# Python
 __pycache__/
+venv/
+.venv/
+
+# IDE and OS
 .ipynb_checkpoints/
 .DS_Store
 ._*
-venv/
-.venv/
