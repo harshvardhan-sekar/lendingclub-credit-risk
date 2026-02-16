@@ -1,0 +1,149 @@
+{
+  "baseline_levels": {
+    "UNRATE": 4.0,
+    "CSUSHPINSA": 203.0,
+    "DFF": 1.8
+  },
+  "scenario_weights": {
+    "central": 0.6,
+    "mild": 0.25,
+    "stress": 0.15
+  },
+  "forward_paths": {
+    "central": {
+      "UNRATE": [
+        3.8,
+        3.7,
+        3.6,
+        3.5,
+        3.5,
+        3.5,
+        3.5,
+        3.5
+      ],
+      "CSUSHPINSA": [
+        208.0,
+        211.0,
+        214.0,
+        217.0,
+        220.0,
+        219.0,
+        224.0,
+        230.0
+      ],
+      "DFF": [
+        2.4,
+        2.4,
+        2.19,
+        1.55,
+        1.58,
+        0.65,
+        0.09,
+        0.09
+      ]
+    },
+    "mild": {
+      "UNRATE": [
+        5.5,
+        5.3,
+        5.2,
+        5.0,
+        4.8,
+        4.7,
+        4.6,
+        4.5
+      ],
+      "CSUSHPINSA": [
+        193.0,
+        192.0,
+        191.0,
+        190.0,
+        191.0,
+        192.0,
+        193.0,
+        194.0
+      ],
+      "DFF": [
+        2.5,
+        2.6,
+        2.5,
+        2.2,
+        2.0,
+        1.8,
+        1.5,
+        1.2
+      ]
+    },
+    "stress": {
+      "UNRATE": [
+        5.5,
+        7.0,
+        8.5,
+        9.5,
+        10.0,
+        9.5,
+        9.0,
+        8.5
+      ],
+      "CSUSHPINSA": [
+        173.0,
+        170.0,
+        168.0,
+        167.0,
+        168.0,
+        170.0,
+        172.0,
+        175.0
+      ],
+      "DFF": [
+        3.5,
+        3.8,
+        3.5,
+        3.0,
+        2.5,
+        2.0,
+        1.5,
+        0.8
+      ]
+    }
+  },
+  "quarter_labels": [
+    "2019-Q1",
+    "2019-Q2",
+    "2019-Q3",
+    "2019-Q4",
+    "2020-Q1",
+    "2020-Q2",
+    "2020-Q3",
+    "2020-Q4"
+  ],
+  "multi_factor_elasticities": {
+    "UNRATE": {
+      "slope": 0.00316048202461145,
+      "elasticity": 1.9145215151414903,
+      "r_squared": 0.7049674623156508,
+      "cv_mse": 0.00015422843403245143,
+      "cv_std": 0.00017723617582368522
+    },
+    "CSUSHPINSA": {
+      "slope": -0.00016340607551452557,
+      "elasticity": -2.5,
+      "r_squared": 0.7049674623156508,
+      "cv_mse": 0.00015422843403245143,
+      "cv_std": 0.00017723617582368522
+    },
+    "DFF": {
+      "slope": 0.002502755258617427,
+      "elasticity": 0.20379649464848482,
+      "r_squared": 0.7049674623156508,
+      "cv_mse": 0.00015422843403245143,
+      "cv_std": 0.00017723617582368522
+    }
+  },
+  "scenario_descriptions": {
+    "central": "Actual 2019-2020 FRED values \u2014 economy improving, UNRATE falling to 3.5%",
+    "mild": "+1.5pp UNRATE shock, -5% HPI from baseline, moderate recession with mean-reversion",
+    "stress": "+5.5pp UNRATE shock, -15% HPI from baseline, severe CCAR-aligned recession"
+  },
+  "methodology": "V6.1 multi-factor time-varying stress: Ridge regression elasticities applied quarterly"
+}
