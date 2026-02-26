@@ -49,8 +49,9 @@ RAG_THRESHOLDS: dict[str, dict[str, tuple[float, float]]] = {
     "auc_ml": {"green": (0.73, float("inf")), "amber": (0.71, 0.73)},
     # KS Scorecard: Green >= 30%, Amber 26-30%, Red < 26%
     "ks_scorecard": {"green": (0.30, float("inf")), "amber": (0.26, 0.30)},
-    # Brier score: Green < 0.15, Amber 0.15-0.20, Red >= 0.20 (lower is better)
-    "brier": {"green": (0.0, 0.15), "amber": (0.15, 0.20)},
+    # Brier Skill Score: Green >= 0.20, Amber 0.10-0.20, Red < 0.10 (higher is better)
+    # BSS = 1 - brier_model / brier_naive; scale-invariant relative to prevalence baseline
+    "brier_skill_score": {"green": (0.20, float("inf")), "amber": (0.10, 0.20)},
     # Overfit gap (train-test AUC): Green < 0.03, Amber 0.03-0.05, Red >= 0.05
     "overfit_gap": {"green": (0.0, 0.03), "amber": (0.03, 0.05)},
     # Hosmer-Lemeshow p-value: Green > 0.05, Amber 0.01-0.05, Red < 0.01
@@ -62,6 +63,40 @@ RAG_THRESHOLDS: dict[str, dict[str, tuple[float, float]]] = {
     # LGD Stage 1 AUC: Green >= 0.65, Amber 0.55-0.65, Red < 0.55
     "lgd_stage1_auc": {"green": (0.65, float("inf")), "amber": (0.55, 0.65)},
 }
+
+
+# ---------------------------------------------------------------------------
+# Calibration helpers
+# ---------------------------------------------------------------------------
+
+
+def compute_brier_skill_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Compute Brier Skill Score (BSS) relative to naive prevalence baseline.
+
+    BSS = 1 - brier_model / brier_naive, where brier_naive = p*(1-p) for the
+    prevalence p. BSS is scale-invariant and higher-is-better (unlike raw Brier).
+    BSS > 0 means model beats the naive baseline; BSS = 1 is perfect.
+
+    Parameters
+    ----------
+    y_true : array-like
+        Binary labels (0/1).
+    y_pred : array-like
+        Predicted probabilities.
+
+    Returns
+    -------
+    float
+        Brier Skill Score in (−∞, 1].
+    """
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+    brier_model = brier_score_loss(y_true, y_pred)
+    prevalence = float(y_true.mean())
+    brier_naive = prevalence * (1.0 - prevalence)
+    if brier_naive == 0.0:
+        return 0.0
+    return float(1.0 - brier_model / brier_naive)
 
 
 # ---------------------------------------------------------------------------
@@ -247,9 +282,10 @@ def compute_cap_curve(
     pct_defaults_random = pct_pop
 
     # Accuracy Ratio = area between model and random / area between perfect and random
-    area_model = np.trapz(pct_defaults_model, pct_pop)
-    area_random = np.trapz(pct_defaults_random, pct_pop)
-    area_perfect = np.trapz(pct_defaults_perfect, pct_pop)
+    _trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+    area_model = _trapz(pct_defaults_model, pct_pop)
+    area_random = _trapz(pct_defaults_random, pct_pop)
+    area_perfect = _trapz(pct_defaults_perfect, pct_pop)
     ar = (area_model - area_random) / (area_perfect - area_random)
 
     # Subsample for plotting
@@ -344,8 +380,11 @@ def compute_calibration_by_decile(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     n_bins: int = 10,
+    n_bootstrap: int = 1000,
+    confidence: float = 0.95,
+    random_state: int = 42,
 ) -> pd.DataFrame:
-    """Compute calibration table by score decile.
+    """Compute calibration table by score decile with bootstrap CIs.
 
     Parameters
     ----------
@@ -355,11 +394,18 @@ def compute_calibration_by_decile(
         Predicted probabilities.
     n_bins : int
         Number of bins.
+    n_bootstrap : int
+        Bootstrap iterations for 95% CI on observed_default_rate.
+    confidence : float
+        Confidence level (default 0.95).
+    random_state : int
+        Random seed for reproducibility.
 
     Returns
     -------
     DataFrame
-        Columns: decile, n, observed_default_rate, predicted_default_rate, ratio
+        Columns: decile, n, observed_default_rate, predicted_default_rate, ratio,
+                 obs_ci_lower, obs_ci_upper
     """
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
@@ -382,6 +428,30 @@ def compute_calibration_by_decile(
     result["ratio"] = result["observed_default_rate"] / result[
         "predicted_default_rate"
     ].replace(0, np.nan)
+
+    # Bootstrap 95% CIs for observed_default_rate per decile.
+    # Bin boundaries are fixed from the point estimate; only rows are resampled.
+    rng = np.random.RandomState(random_state)
+    alpha = (1.0 - confidence) / 2.0
+    decile_labels = result["decile"].tolist()
+    boot_means: dict = {d: [] for d in decile_labels}
+
+    for _ in range(n_bootstrap):
+        idx = rng.randint(0, len(df), size=len(df))
+        samp = df.iloc[idx]
+        grp_means = samp.groupby("decile")["y_true"].mean()
+        for d in decile_labels:
+            if d in grp_means.index:
+                boot_means[d].append(float(grp_means[d]))
+
+    result["obs_ci_lower"] = [
+        float(np.percentile(boot_means[d], 100.0 * alpha)) if boot_means[d] else np.nan
+        for d in decile_labels
+    ]
+    result["obs_ci_upper"] = [
+        float(np.percentile(boot_means[d], 100.0 * (1.0 - alpha))) if boot_means[d] else np.nan
+        for d in decile_labels
+    ]
 
     return result
 

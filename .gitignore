@@ -3,6 +3,7 @@ data/raw/
 
 # Processed data
 data/processed/*.parquet
+data/processed/*.csv
 
 # Pickle files (binary, security risk in public repos)
 *.pkl
@@ -10,6 +11,7 @@ data/processed/*.parquet
 # Environment and secrets
 .env
 *.joblib
+.streamlit/secrets.toml
 
 # Python
 __pycache__/

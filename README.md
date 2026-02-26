@@ -1,19 +1,21 @@
 # CECL Credit Risk Analytics — LendingClub Portfolio
 
-End-to-end **CECL-compliant** credit risk platform for a **$11.7B LendingClub consumer lending portfolio** (1.35M loans, 2007–2018). Built using the same institutional frameworks used in production ALLL/CECL workflows at major financial institutions — PD/LGD/EAD modeling, synthetic receivables tracking, forward default flow rates, macro stress testing, and probability-weighted ECL across Pre-FEG, Central, and Post-FEG views.
+End-to-end **CECL-compliant** credit risk platform for a **$19.4B LendingClub consumer lending portfolio** (1.35M loans, 2007–2018). Built using the same institutional frameworks used in production ALLL/CECL workflows at major financial institutions — PD/LGD/EAD modeling, synthetic receivables tracking, forward default flow rates, macro stress testing, and probability-weighted ECL across Pre-FEG, Central, and Post-FEG views.
 
 ## Key Results
 
 | Metric | Value |
 |--------|-------|
-| **Portfolio** | $11.7B funded amount, 1,345,350 loans, 7 credit grades |
-| **PD Scorecard** (Logistic Regression) | AUC **0.693**, Gini 38.6%, KS 28.1% — 13 WoE features |
-| **PD ML Ensemble** (XGBoost) | AUC **0.720** — 50 SHAP-selected features from 101 |
-| **LGD Model** (Two-stage) | MAE **7.6%**, portfolio mean 88.4% |
-| **EAD Model** (Random Forest) | MAPE **8.3%** |
-| **DCF-ECL** (Pre-FEG baseline) | $1.18B — 6.09% ALLL ratio |
-| **Post-FEG ECL** (probability-weighted) | **$2.9B** — 64.6% variance under macro stress |
-| **Population Stability** | All PSI < 0.04 (GREEN) across test periods |
+| **Portfolio** | $19.39B total funded, $11.74B EAD, 1,345,350 loans, 7 credit grades |
+| **PD Scorecard** (Logistic Regression) | AUC **0.6931**, Gini 38.6%, KS 28.1% — 13 WoE features |
+| **PD ML Ensemble** (XGBoost) | AUC **0.7202** — 50 SHAP-selected features from 101 |
+| **LGD Model** (Two-stage) | MAE **7.6%**, portfolio mean 89.0% |
+| **EAD Model** (Random Forest) | MAPE **23.8%** |
+| **Pre-FEG ECL** (baseline) | $2.39B — 20.35% ALLL ratio |
+| **Central ECL** (macro-adjusted) | $1.15B — 9.81% ALLL ratio |
+| **Post-FEG ECL** (probability-weighted) | **$3.49B** — 29.71% ALLL under macro stress |
+| **FEG Formula** | 0.60×$1.15B + 0.25×$4.75B + 0.15×$10.72B = $3.49B |
+| **Population Stability** | All PSI GREEN (0.0043, 0.0097, 0.0355) across test periods |
 
 ## Architecture
 
@@ -29,9 +31,9 @@ graph TD
     D --> F
     E --> F
 
-    F --> G["<b>Pre-FEG</b><br/>Baseline ECL<br/>$1.18B · 6.09%"]
-    F --> H["<b>Central</b><br/>Macro-Adjusted ECL<br/>Forward UNRATE Path"]
-    F --> I["<b>Post-FEG</b><br/>Probability-Weighted<br/>$2.9B · 3 Scenarios"]
+    F --> G["<b>Pre-FEG</b><br/>Baseline ECL<br/>$2.39B · 20.35%"]
+    F --> H["<b>Central</b><br/>Macro-Adjusted ECL<br/>$1.15B · 9.81%"]
+    F --> I["<b>Post-FEG</b><br/>Probability-Weighted<br/>$3.49B · 3 Scenarios"]
 
     style A fill:#1a1a2e,stroke:#e94560,color:#fff
     style F fill:#16213e,stroke:#0f3460,color:#fff
@@ -69,6 +71,17 @@ graph TD
 │   ├── processed/                # Cleaned parquets, train/val/test splits
 │   └── raw/                      # Original LendingClub CSV (not tracked)
 │
+├── streamlit_app/               # Interactive dashboard
+│   ├── app.py                   # Landing page
+│   └── pages/                   # 7 dashboard pages
+│       ├── 1_Portfolio_Overview  # KPIs, geographic, grade analysis
+│       ├── 2_Roll_Rate_Analysis  # Receivables tracker, Sankey, flow rates
+│       ├── 3_Vintage_Performance # MOB curves, marginal PD, seasoning
+│       ├── 4_ECL_Forecasting    # Operational + CECL mode projections
+│       ├── 5_Scenario_Analysis  # 3-scenario stress testing, FEG views
+│       ├── 6_Model_Monitoring   # RAG dashboard, PSI/CSI, calibration
+│       └── 7_AI_Analyst         # Natural language portfolio Q&A
+│
 ├── docs/                         # Project documentation and roadmap
 ├── config.py                     # Centralized paths and constants
 └── requirements.txt
@@ -84,11 +97,11 @@ graph TD
 
 ### LGD — Two-Stage Model
 
-Stage 1 classifies P(any recovery) via logistic regression. Stage 2 predicts recovery rate conditional on recovery via gradient boosting. Combined: LGD = 1 − P(recovery) × E[recovery_rate | recovery]. Portfolio mean LGD of 88.4% aligns with unsecured consumer credit benchmarks.
+Stage 1 classifies P(any recovery) via logistic regression. Stage 2 predicts recovery rate conditional on recovery via gradient boosting. Combined: LGD = 1 − P(recovery) × E[recovery_rate | recovery]. Portfolio mean LGD of 89.0% aligns with unsecured consumer credit benchmarks.
 
 ### ECL — DCF with Competing Risks
 
-Monthly cash flow projection where each loan faces three outcomes per period: stay current, default, or prepay. Cash flows discounted at effective interest rate. ECL = NPV(contractual) − NPV(expected). Prepayment rates from Kaplan-Meier survival analysis (CPR lookup by term × grade × vintage). Baseline DCF-ECL of 6.09% ALLL benchmarks within 0.39pp of LendingClub's reported 5.7%.
+Monthly cash flow projection where each loan faces three outcomes per period: stay current, default, or prepay. Cash flows discounted at effective interest rate. ECL = NPV(contractual) − NPV(expected). Prepayment rates from Kaplan-Meier survival analysis (CPR lookup by term × grade × vintage). Pre-FEG ECL of $2.39B (20.35% ALLL), Central ECL of $1.15B (9.81% ALLL), and Post-FEG probability-weighted ECL of $3.49B (29.71% ALLL) across three macro scenarios (60/25/15 weights).
 
 ### Forward Default Flow Rates
 
@@ -100,9 +113,9 @@ Multi-quarter forward UNRATE paths over 8-quarter projection horizon:
 
 | Scenario | UNRATE Path | Weight |
 |----------|-------------|--------|
-| **Central** | Actual 2019 FRED data (~3.5%, declining from 4.6% baseline) | 60% |
-| **Mild Downturn** | Rise to 6.0%, then mean reversion | 25% |
-| **Stress** | Rise to 10.0%, then mean reversion | 15% |
+| **Central** | Baseline UNRATE 4.0%, actual 2019 FRED path | 60% |
+| **Mild Downturn** | Peak UNRATE 5.5%, then mean reversion | 25% |
+| **Stress** | Peak UNRATE 10.0%, then mean reversion | 15% |
 
 Time-varying stress multipliers applied at the flow rate level (not output-level), preserving non-linear compounding dynamics. Post-FEG ECL is the probability-weighted blend across all scenarios.
 

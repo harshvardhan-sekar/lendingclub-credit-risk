@@ -1,7 +1,7 @@
 {
   "n_loans": 1345350,
   "total_contractual_npv": 19388585274.999992,
-  "total_expected_npv": 18207398583.683968,
-  "total_ecl_dcf": 1181186691.3160214,
-  "avg_ecl_rate": 0.06092175754767759
+  "total_expected_npv": 18217137983.09633,
+  "total_ecl_dcf": 1171447291.9036634,
+  "avg_ecl_rate": 0.06041943108732898
 }

@@ -93,7 +93,7 @@
       "term": 60,
       "grade": "D",
       "ead_actual": 8396.323693837858,
-      "ead_predicted": 7552.411248394132,
+      "ead_predicted": 7552.41124839413,
       "error_pct": -10.05
     },
     {
@@ -125,7 +125,7 @@
       "term": 36,
       "grade": "C",
       "ead_actual": 5363.698053183434,
-      "ead_predicted": 5457.5572667028255,
+      "ead_predicted": 5457.557266702826,
       "error_pct": 1.75
     },
     {
@@ -133,7 +133,7 @@
       "term": 36,
       "grade": "C",
       "ead_actual": 15856.587609175753,
-      "ead_predicted": 12148.054826596526,
+      "ead_predicted": 12148.05482659653,
       "error_pct": -23.39
     },
     {
@@ -141,7 +141,7 @@
       "term": 60,
       "grade": "D",
       "ead_actual": 17480.618892896448,
-      "ead_predicted": 14914.803744692259,
+      "ead_predicted": 14914.803744692266,
       "error_pct": -14.68
     },
     {

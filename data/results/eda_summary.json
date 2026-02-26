@@ -1,0 +1,96 @@
+{
+  "total_records": 1345350,
+  "default_rate": 0.1996,
+  "features_kept": 124,
+  "train_records": 826606,
+  "val_records": 293105,
+  "test_records": 225639,
+  "train_default_rate": 0.1843,
+  "val_default_rate": 0.2329,
+  "test_default_rate": 0.2129,
+  "macro_features": {
+    "UNRATE": {
+      "mean": 5.5774,
+      "std": 1.1971,
+      "min": 3.7,
+      "max": 10.0
+    },
+    "CSUSHPINSA": {
+      "mean": 172.6567,
+      "std": 14.2454,
+      "min": 133.986,
+      "max": 205.343
+    },
+    "A191RL1Q225SBEA": {
+      "mean": 2.3626,
+      "std": 1.4761,
+      "min": -8.5,
+      "max": 5.3
+    },
+    "CPIAUCSL": {
+      "mean": 238.0053,
+      "std": 5.356,
+      "min": 207.234,
+      "max": 252.772
+    },
+    "DFF": {
+      "mean": 0.3544,
+      "std": 0.4203,
+      "min": 0.0664,
+      "max": 5.2584
+    },
+    "UMCSENT": {
+      "mean": 89.1446,
+      "std": 7.626,
+      "min": 55.3,
+      "max": 101.4
+    }
+  },
+  "sanity_checks": {
+    "terminal_loans": {
+      "expected": "~1,345,350",
+      "actual": 1345350,
+      "status": "PASS"
+    },
+    "default_rate": {
+      "expected": "~19.96%",
+      "actual": "19.9650%",
+      "status": "PASS"
+    },
+    "grade_monotonicity": {
+      "expected": "A < B < C < D < E < F < G",
+      "actual": "True",
+      "status": "PASS"
+    },
+    "term_values": {
+      "expected": "{36, 60}",
+      "actual": "{np.int64(36), np.int64(60)}",
+      "status": "PASS"
+    },
+    "emp_length_range": {
+      "expected": "{0..10}",
+      "actual": "[np.float64(0.0), np.float64(1.0), np.float64(2.0), np.float64(3.0), np.float64(4.0), np.float64(5.0), np.float64(6.0), np.float64(7.0), np.float64(8.0), np.float64(9.0), np.float64(10.0)]",
+      "status": "PASS"
+    },
+    "int_rate": {
+      "expected": "[5.31, 30.99], mean~13.09",
+      "actual": "[5.31, 30.99], mean=13.24",
+      "status": "PASS"
+    },
+    "fico_range_low": {
+      "expected": "[610, 845], mean~698.59",
+      "actual": "[625, 845], mean=696.19",
+      "status": "CHECK"
+    },
+    "loan_amnt": {
+      "expected": "[500, 40000], mean~$15,047",
+      "actual": "[500, 40,000], mean=$14,420",
+      "status": "PASS"
+    },
+    "accounting_check": {
+      "expected": "total_pymnt ~ sum of components",
+      "actual": "100.00% within $1",
+      "status": "PASS"
+    }
+  }
+}

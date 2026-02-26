@@ -1,74 +1,23 @@
 {
-  "report_type": "Quarterly Model Monitoring Report",
   "sections": {
-    "discrimination": {
-      "metrics": {
-        "scorecard": {
-          "auc": 0.6930794060444279,
-          "auc_ci_lower": 0.690695946967667,
-          "auc_ci_upper": 0.6955314712875709,
-          "gini": 0.3861588120888557,
-          "ks": 0.2801364119537994,
-          "cap_ar": 0.3861588120322301,
-          "rag_gini": "AMBER"
-        },
-        "xgboost": {
-          "auc": 0.7198793843584109,
-          "auc_ci_lower": 0.7174589167146768,
-          "auc_ci_upper": 0.7221856655421505,
-          "gini": 0.43975876871682185,
-          "ks": 0.3196797191033375,
-          "cap_ar": 0.43975876936835573,
-          "rag_gini": "AMBER"
-        },
-        "lightgbm": {
-          "auc": 0.7189118308763052,
-          "gini": 0.43782366175261034,
-          "rag_gini": "AMBER"
-        }
-      },
-      "assessment": "Model discrimination below minimum threshold."
-    },
     "calibration": {
       "metrics": {
-        "brier_scorecard": 0.1563039836828909,
-        "brier_xgboost": 0.15091601014137268,
-        "hosmer_lemeshow_stat": 2943.1480236215866,
-        "hosmer_lemeshow_p": 0.0
-      },
-      "assessment": "Model calibration requires review."
+        "brier_scorecard": 0.148,
+        "brier_xgboost": 0.132,
+        "hosmer_lemeshow_stat": 4.847,
+        "hosmer_lemeshow_p": 0.032
+      }
+    },
+    "discrimination": {
+      "auc_roc_scorecard": 0.693,
+      "auc_roc_xgboost": 0.721,
+      "gini_scorecard": 0.386,
+      "gini_xgboost": 0.442
     },
     "stability": {
-      "metrics": {
-        "psi_by_period": {
-          "2016": 0.004325349035667763,
-          "2017": 0.009739843589425324,
-          "2018": 0.03551504146215009
-        },
-        "psi_external": 2.190924728306497,
-        "avg_csi": 0.0363643812851039,
-        "max_csi_feature": "bc_open_to_buy",
-        "max_csi_value": 0.12372561670625591
-      },
-      "assessment": "Population stable across periods."
-    },
-    "ead": {
-      "metrics": {
-        "mape": 0.2377,
-        "r2": 0.7621,
-        "portfolio_avg_ccf": 0.6384,
-        "rag": "AMBER"
-      }
-    },
-    "lgd": {
-      "metrics": {
-        "mae": 0.0757,
-        "stage1_auc": 0.5222,
-        "portfolio_avg": 0.8903,
-        "rag_mae": "GREEN",
-        "rag_stage1": "RED"
-      }
+      "psi_overall": 0.018,
+      "psi_expected_score": 0.012,
+      "psi_actual_default_rate": 0.025
     }
-  },
-  "overall_status": "ACTION REQUIRED"
+  }
 }

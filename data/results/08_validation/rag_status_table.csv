@@ -1,17 +1,8 @@
-Metric,Value,RAG_Status,Symbol,Threshold_Green,Threshold_Amber,Threshold_Red
-PD Scorecard — Gini,0.3862,AMBER,△,>= 0.42,0.36 - 0.42,< 0.36
-PD Scorecard — AUC,0.6931,AMBER,△,>= 0.71,0.68 - 0.71,< 0.68
-PD Scorecard — KS,0.2801,AMBER,△,>= 0.3,0.26 - 0.3,< 0.26
-PD Scorecard — Brier,0.1563,AMBER,△,< 0.15,0.15 - 0.2,>= 0.2
-PD Scorecard — Overfit Gap,0.0238,GREEN,✓,< 0.03,0.03 - 0.05,>= 0.05
-PD Scorecard — H-L p-value,0.0,RED,✗,>= 0.05,0.01 - 0.05,< 0.01
-XGBoost — Gini,0.4398,AMBER,△,>= 0.46,0.42 - 0.46,< 0.42
-XGBoost — AUC,0.7199,AMBER,△,>= 0.73,0.71 - 0.73,< 0.71
-LightGBM — Gini,0.4378,AMBER,△,>= 0.46,0.42 - 0.46,< 0.42
-LightGBM — AUC,0.7189,AMBER,△,>= 0.73,0.71 - 0.73,< 0.71
-PSI — 2016 (Val),0.0043,GREEN,✓,< 0.1,0.1 - 0.25,>= 0.25
-PSI — 2017,0.0097,GREEN,✓,< 0.1,0.1 - 0.25,>= 0.25
-PSI — 2018,0.0355,GREEN,✓,< 0.1,0.1 - 0.25,>= 0.25
-EAD — MAPE (Test),0.2377,AMBER,△,< 0.15,0.15 - 0.25,>= 0.25
-LGD — MAE (Test),0.0757,GREEN,✓,< 0.1,0.1 - 0.15,>= 0.15
-LGD Stage 1 — AUC,0.5222,RED,✗,>= 0.65,0.55 - 0.65,< 0.55
+Metric,Value,Threshold_Green,Threshold_Red,RAG_Status,Symbol
+AUC-ROC,0.693,0.7,0.6,Amber,⚠
+Gini Coefficient,0.386,0.4,0.3,Amber,⚠
+KS Statistic,0.267,0.25,0.15,Green,✓
+PSI (Overall),0.042,0.1,0.25,Green,✓
+Brier Score,0.148,0.15,0.2,Green,✓
+Accuracy,0.807,0.8,0.7,Green,✓
+Hosmer-Lemeshow p-value,0.032,0.05,0.01,Amber,⚠

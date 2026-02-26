@@ -1,0 +1,67 @@
+{
+  "prepay_threshold": 0.8,
+  "total_loans": 1343037,
+  "total_prepaid": 735748,
+  "overall_prepay_rate": 0.5478,
+  "cpr_by_term": {
+    "36": {
+      "smm": 0.011122,
+      "cpr": 0.1256,
+      "n_loans": 1019076,
+      "n_prepaid": 539167,
+      "prepay_rate": 0.5291
+    },
+    "60": {
+      "smm": 0.014341,
+      "cpr": 0.1591,
+      "n_loans": 323961,
+      "n_prepaid": 196581,
+      "prepay_rate": 0.6068
+    }
+  },
+  "cpr_by_grade": {
+    "A": {
+      "smm": 0.012751,
+      "cpr": 0.1427,
+      "n_loans": 234929
+    },
+    "B": {
+      "smm": 0.01346,
+      "cpr": 0.1501,
+      "n_loans": 392345
+    },
+    "C": {
+      "smm": 0.012895,
+      "cpr": 0.1442,
+      "n_loans": 381091
+    },
+    "D": {
+      "smm": 0.012514,
+      "cpr": 0.1403,
+      "n_loans": 200419
+    },
+    "E": {
+      "smm": 0.012301,
+      "cpr": 0.138,
+      "n_loans": 93285
+    },
+    "F": {
+      "smm": 0.01138,
+      "cpr": 0.1283,
+      "n_loans": 31914
+    },
+    "G": {
+      "smm": 0.012483,
+      "cpr": 0.1399,
+      "n_loans": 9054
+    }
+  },
+  "validation": {
+    "mae_cpr": 0.0404,
+    "rmse_cpr": 0.0517,
+    "mean_bias": 0.0391,
+    "n_segments_validated": 14
+  },
+  "lookup_table_segments": 56,
+  "liquidation_curve_rows": 993
+}
