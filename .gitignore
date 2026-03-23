@@ -2,7 +2,7 @@
 data/raw/
 
 # Processed data
-data/processed/*.parquet
+# data/processed/*.parquet  (tracked via Git LFS)
 data/processed/*.csv
 
 # Pickle files (binary, security risk in public repos)
